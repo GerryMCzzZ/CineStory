@@ -1,0 +1,30 @@
+{
+  "name": "cinestory-frontend",
+  "version": "1.0.0",
+  "description": "CineStory - Novel to Anime Video Generator Frontend",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore"
+  },
+  "dependencies": {
+    "vue": "^3.4.21",
+    "vue-router": "^4.3.0",
+    "pinia": "^2.1.7",
+    "axios": "^1.6.7",
+    "@vueuse/core": "^10.9.0",
+    "dayjs": "^1.11.10"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.4",
+    "vite": "^5.2.0",
+    "sass": "^1.72.0",
+    "unocss": "^0.58.5",
+    "@iconify-json/carbon": "^1.1.35"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1,0 +1,120 @@
+version: '3.8'
+
+services:
+  # MySQL 数据库
+  mysql:
+    image: mysql:8.0
+    container_name: cinestory-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: cinestory123
+      MYSQL_DATABASE: cinestory
+      MYSQL_USER: cinestory
+      MYSQL_PASSWORD: cinestory123
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
+    networks:
+      - cinestory-network
+
+  # Redis 缓存
+  redis:
+    image: redis:7-alpine
+    container_name: cinestory-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - cinestory-network
+
+  # MinIO 对象存储
+  minio:
+    image: minio/minio:latest
+    container_name: cinestory-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+      TZ: Asia/Shanghai
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - cinestory-network
+
+  # 后端服务
+  backend:
+    build:
+      context: ./cinestory-backend
+      dockerfile: Dockerfile
+    container_name: cinestory-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/cinestory?useUnicode=true&characterEncoding=utf8mb4&serverTimezone=Asia/Shanghai
+      SPRING_DATASOURCE_USERNAME: cinestory
+      SPRING_DATASOURCE_PASSWORD: cinestory123
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      # API 密钥（通过环境变量配置）
+      RUNWAY_API_KEY: ${RUNWAY_API_KEY:-}
+      PIKA_API_KEY: ${PIKA_API_KEY:-}
+      LUMA_API_KEY: ${LUMA_API_KEY:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      JAVA_OPTS: -Xmx1g -Xms512m
+    depends_on:
+      - mysql
+      - redis
+      - minio
+    volumes:
+      - backend-logs:/app/logs
+      - backend-output:/app/output
+    networks:
+      - cinestory-network
+
+  # 前端服务（可选）
+  frontend:
+    build:
+      context: ./cinestory-frontend
+      dockerfile: Dockerfile
+    container_name: cinestory-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - cinestory-network
+
+volumes:
+  mysql-data:
+    driver: local
+  redis-data:
+    driver: local
+  minio-data:
+    driver: local
+  backend-logs:
+    driver: local
+  backend-output:
+    driver: local
+
+networks:
+  cinestory-network:
+    driver: bridge
