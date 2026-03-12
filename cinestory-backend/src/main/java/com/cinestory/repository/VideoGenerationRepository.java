@@ -25,6 +25,16 @@ public interface VideoGenerationRepository extends JpaRepository<VideoGeneration
     List<VideoGeneration> findByStatusOrderByCreatedAtAsc(VideoGeneration.GenerationStatus status);
 
     /**
+     * 根据多个状态查询生成记录
+     */
+    List<VideoGeneration> findByStatusIn(List<VideoGeneration.GenerationStatus> statuses);
+
+    /**
+     * 根据项目ID查询所有生成记录
+     */
+    List<VideoGeneration> findByProjectId(Long projectId);
+
+    /**
      * 根据第三方任务ID查询
      */
     Optional<VideoGeneration> findByProviderTaskId(String providerTaskId);

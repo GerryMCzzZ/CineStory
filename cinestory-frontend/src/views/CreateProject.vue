@@ -20,7 +20,9 @@
             class="input"
             placeholder="为你的项目起个名字"
             required
+            maxlength="255"
           />
+          <p class="text-xs text-gray-500 mt-1">{{ form.name.length }} / 255</p>
         </div>
 
         <!-- 项目描述 -->
@@ -31,88 +33,32 @@
           <textarea
             v-model="form.description"
             class="input"
-            rows="3"
+            rows="2"
             placeholder="简单描述一下这个项目"
+            maxlength="1000"
           ></textarea>
+          <p class="text-xs text-gray-500 mt-1 text-right">{{ form.description.length }} / 1000</p>
         </div>
 
-        <!-- 小说来源 -->
+        <!-- 小说内容 -->
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             小说内容 <span class="text-red-500">*</span>
           </label>
-          <div class="space-y-4">
-            <!-- 选项卡 -->
-            <div class="flex border-b border-gray-200 dark:border-gray-700">
-              <button
-                type="button"
-                @click="inputMethod = 'paste'"
-                :class="[
-                  'px-4 py-2 border-b-2 transition-colors',
-                  inputMethod === 'paste'
-                    ? 'border-purple-600 text-purple-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                ]"
-              >
-                粘贴文本
-              </button>
-              <button
-                type="button"
-                @click="inputMethod = 'file'"
-                :class="[
-                  'px-4 py-2 border-b-2 transition-colors',
-                  inputMethod === 'file'
-                    ? 'border-purple-600 text-purple-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                ]"
-              >
-                上传文件
-              </button>
-            </div>
 
-            <!-- 粘贴文本输入 -->
-            <div v-if="inputMethod === 'paste'">
-              <textarea
-                v-model="form.content"
-                class="input"
-                rows="12"
-                placeholder="粘贴小说文本内容..."
-                required
-              ></textarea>
-              <div class="text-right text-sm text-gray-500 mt-1">
-                {{ form.content.length }} 字
-              </div>
-            </div>
+          <FileUploader
+            ref="fileUploaderRef"
+            v-model="form.content"
+            :show-preview="true"
+            :auto-upload="false"
+            @change="handleContentChange"
+          />
 
-            <!-- 文件上传 -->
-            <div v-else class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
-              <input
-                ref="fileInput"
-                type="file"
-                accept=".txt,.md"
-                class="hidden"
-                @change="handleFileChange"
-              />
-              <div v-if="uploadedFile" class="text-green-600 dark:text-green-400">
-                <span class="text-2xl">✓</span>
-                <p class="mt-2">{{ uploadedFile.name }}</p>
-                <p class="text-sm text-gray-500">{{ (uploadedFile.size / 1024).toFixed(0) }} KB</p>
-                <button type="button" @click="clearFile" class="text-red-500 text-sm mt-2">重新选择</button>
-              </div>
-              <div v-else>
-                <div class="text-4xl mb-4">📄</div>
-                <p class="text-gray-600 dark:text-gray-400 mb-4">
-                  支持 .txt、.md 格式
-                </p>
-                <button
-                  type="button"
-                  @click="$refs.fileInput.click()"
-                  class="btn-primary"
-                >
-                  选择文件
-                </button>
-              </div>
-            </div>
+          <!-- 内容统计 -->
+          <div v-if="form.content" class="mt-3 flex gap-4 text-sm text-gray-500">
+            <span>字数: {{ contentStats.chars }}</span>
+            <span>预估时长: {{ contentStats.duration }}秒</span>
+            <span>预估切片: {{ contentStats.slices }}个</span>
           </div>
         </div>
 
@@ -121,21 +67,75 @@
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             风格模板
           </label>
-          <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div v-if="loadingStyles" class="text-center py-8">
+            <div class="inline-block w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+          <div v-else class="grid grid-cols-2 md:grid-cols-3 gap-3">
             <div
               v-for="style in availableStyles"
               :key="style.id"
               @click="form.styleId = style.id"
               :class="[
-                'p-4 rounded-lg border-2 cursor-pointer transition-all',
+                'p-4 rounded-lg border-2 cursor-pointer transition-all relative',
                 form.styleId === style.id
                   ? 'border-purple-600 bg-purple-50 dark:bg-purple-900/20'
                   : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
               ]"
             >
-              <div class="text-2xl mb-2">{{ style.icon }}</div>
+              <div v-if="form.styleId === style.id" class="absolute top-2 right-2 w-4 h-4 bg-purple-600 rounded-full flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div class="text-3xl mb-2">{{ style.icon }}</div>
               <div class="font-medium text-gray-800 dark:text-gray-200">{{ style.name }}</div>
-              <div class="text-xs text-gray-500">{{ style.nameEn }}</div>
+              <div class="text-xs text-gray-500">{{ style.category }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 高级选项（折叠） -->
+        <div>
+          <button
+            type="button"
+            @click="showAdvanced = !showAdvanced"
+            class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="w-4 h-4 transition-transform"
+              :class="{ 'rotate-90': showAdvanced }"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+            高级选项
+          </button>
+
+          <div v-if="showAdvanced" class="mt-4 space-y-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                小说标题
+              </label>
+              <input
+                v-model="form.novelTitle"
+                type="text"
+                class="input"
+                placeholder="可选，留空则自动提取"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                小说作者
+              </label>
+              <input
+                v-model="form.novelAuthor"
+                type="text"
+                class="input"
+                placeholder="可选"
+              />
             </div>
           </div>
         </div>
@@ -145,9 +145,9 @@
           <button type="button" @click="goBack" class="btn btn-secondary">
             取消
           </button>
-          <button type="submit" :disabled="submitting" class="btn-primary">
+          <button type="submit" :disabled="submitting || !form.content" class="btn-primary" :class="{ 'opacity-50 cursor-not-allowed': submitting || !form.content }">
             <span v-if="submitting">创建中...</span>
-            <span v-else>创建项目</span>
+            <span v-else>🚀 创建项目</span>
           </button>
         </div>
       </form>
@@ -156,53 +156,96 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useProjectStore } from '@/store/useProjectStore'
+import FileUploader from '@/components/FileUploader.vue'
+import { fetchStyles } from '@/api/style'
 
 const router = useRouter()
 const projectStore = useProjectStore()
 
-const inputMethod = ref('paste')
+const fileUploaderRef = ref(null)
 const submitting = ref(false)
-const uploadedFile = ref(null)
+const loadingStyles = ref(false)
+const showAdvanced = ref(false)
 
 const form = reactive({
   name: '',
   description: '',
   content: '',
-  styleId: 1
+  novelTitle: '',
+  novelAuthor: '',
+  styleId: null
 })
 
-// 可用风格列表（实际应从API获取）
-const availableStyles = [
-  { id: 1, name: '日式动漫风', nameEn: 'Japanese Anime', icon: '🌸' },
-  { id: 2, name: '3D动漫风', nameEn: '3D Anime', icon: '✨' },
-  { id: 3, name: '水墨国风', nameEn: 'Chinese Ink', icon: '🎨' },
-  { id: 4, name: '赛博朋克', nameEn: 'Cyberpunk', icon: '🌆' },
-  { id: 5, name: '吉卜力风', nameEn: 'Ghibli Style', icon: '🏞️' }
-]
+// 风格列表
+const availableStyles = ref([])
+
+// 内容统计
+const contentStats = computed(() => {
+  const chars = form.content.length
+  // 简单估算：每秒约50字，每个切片约500字
+  return {
+    chars,
+    duration: Math.ceil(chars / 50),
+    slices: Math.ceil(chars / 500)
+  }
+})
+
+// 加载风格列表
+onMounted(async () => {
+  loadingStyles.value = true
+  try {
+    const styles = await fetchStyles()
+    availableStyles.value = styles.map((s, index) => ({
+      id: s.id || index + 1,
+      name: s.name || '未命名风格',
+      category: s.category || '默认',
+      icon: getStyleIcon(s.category),
+      previewImage: s.previewImage
+    }))
+    // 默认选择第一个
+    if (availableStyles.value.length > 0 && !form.styleId) {
+      form.styleId = availableStyles.value[0].id
+    }
+  } catch (err) {
+    console.error('Failed to load styles:', err)
+    // 使用默认风格
+    availableStyles.value = [
+      { id: 1, name: '日式动漫风', category: 'Anime', icon: '🌸' },
+      { id: 2, name: '3D动漫风', category: '3D', icon: '✨' },
+      { id: 3, name: '水墨国风', category: 'Chinese', icon: '🎨' },
+      { id: 4, name: '赛博朋克', category: 'Sci-Fi', icon: '🌆' },
+      { id: 5, name: '吉卜力风', category: 'Ghibli', icon: '🏞️' }
+    ]
+    form.styleId = 1
+  } finally {
+    loadingStyles.value = false
+  }
+})
+
+const getStyleIcon = (category) => {
+  const icons = {
+    'Anime': '🌸',
+    '3D': '✨',
+    'Chinese': '🎨',
+    'Sci-Fi': '🌆',
+    'Ghibli': '🏞️'
+  }
+  return icons[category] || '🎬'
+}
 
 const goBack = () => {
   router.push('/projects')
 }
 
-const handleFileChange = (e) => {
-  const file = e.target.files[0]
-  if (file) {
-    uploadedFile.value = file
-    // 读取文件内容
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      form.content = e.target.result
-    }
-    reader.readAsText(file)
+const handleContentChange = (file, content) => {
+  // 从文件名提取标题（如果没有手动填写）
+  if (!form.novelTitle && file) {
+    const fileName = file.name.replace(/\.[^/.]+$/, '')
+    form.novelTitle = fileName
   }
-}
-
-const clearFile = () => {
-  uploadedFile.value = null
-  form.content = ''
 }
 
 const handleSubmit = async () => {
@@ -217,6 +260,8 @@ const handleSubmit = async () => {
       name: form.name,
       description: form.description,
       novelContent: form.content,
+      novelTitle: form.novelTitle,
+      novelAuthor: form.novelAuthor,
       styleTemplateId: form.styleId
     })
     router.push(`/projects/${project.id}`)

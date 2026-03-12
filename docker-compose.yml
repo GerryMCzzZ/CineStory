@@ -16,11 +16,15 @@ services:
       - "3306:3306"
     volumes:
       - mysql-data:/var/lib/mysql
-      - ./docker/mysql/init:/docker-entrypoint-initdb.d
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
       - --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - cinestory-network
 
@@ -34,6 +38,11 @@ services:
     volumes:
       - redis-data:/data
     command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
     networks:
       - cinestory-network
 
@@ -52,6 +61,11 @@ services:
     volumes:
       - minio-data:/data
     command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
     networks:
       - cinestory-network
 
@@ -78,18 +92,29 @@ services:
       PIKA_API_KEY: ${PIKA_API_KEY:-}
       LUMA_API_KEY: ${LUMA_API_KEY:-}
       LLM_API_KEY: ${LLM_API_KEY:-}
+      SPRING_DOC_SWAGGER_UI_ENABLED: "true"
       JAVA_OPTS: -Xmx1g -Xms512m
     depends_on:
-      - mysql
-      - redis
-      - minio
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     volumes:
       - backend-logs:/app/logs
-      - backend-output:/app/output
+      - backend-storage:/app/storage
+      - backend-uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
     networks:
       - cinestory-network
 
-  # 前端服务（可选）
+  # 前端服务
   frontend:
     build:
       context: ./cinestory-frontend
@@ -99,7 +124,8 @@ services:
     ports:
       - "3000:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - cinestory-network
 
@@ -112,7 +138,9 @@ volumes:
     driver: local
   backend-logs:
     driver: local
-  backend-output:
+  backend-storage:
+    driver: local
+  backend-uploads:
     driver: local
 
 networks:

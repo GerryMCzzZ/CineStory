@@ -65,11 +65,26 @@
             {{ starting ? '启动中...' : '🚀 开始生成视频' }}
           </button>
           <button
+            v-if="canCancel"
+            @click="cancelGeneration"
+            :disabled="cancelling"
+            class="btn-warning"
+          >
+            {{ cancelling ? '取消中...' : '⏹️ 取消任务' }}
+          </button>
+          <button
             v-if="canDownload"
             @click="downloadVideo"
             class="btn-secondary"
           >
             📥 下载视频
+          </button>
+          <button
+            v-if="canPreview"
+            @click="showPreview = true"
+            class="btn-secondary"
+          >
+            🎬 预览视频
           </button>
           <button
             @click="showSlices = !showSlices"
@@ -80,41 +95,75 @@
         </div>
       </div>
 
-      <!-- 进度跟踪 -->
-      <div v-if="project.status === 'PROCESSING'" class="card mb-6">
-        <h2 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">生成进度</h2>
+      <!-- 实时进度跟踪 -->
+      <div v-if="isProcessing || wsProgress.isProcessing" class="card mb-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">生成进度</h2>
+          <div v-if="wsConnected" class="flex items-center gap-2 text-sm text-green-500">
+            <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            实时连接
+          </div>
+        </div>
+
         <div class="space-y-4">
+          <!-- 进度条 -->
           <div>
             <div class="flex justify-between text-sm mb-1">
               <span>总进度</span>
-              <span>{{ project.progress || 0 }}%</span>
+              <span class="font-medium">{{ displayProgress }}%</span>
             </div>
-            <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden relative">
               <div
-                class="h-full bg-gradient-primary progress-bar-animated"
-                :style="{ width: (project.progress || 0) + '%' }"
-              ></div>
+                class="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-300 ease-out"
+                :style="{ width: displayProgress + '%' }"
+              >
+                <div class="absolute inset-0 bg-white/20 animate-pulse" v-if="isProcessing"></div>
+              </div>
             </div>
           </div>
 
-          <div class="grid grid-cols-3 gap-4 text-center text-sm">
+          <!-- 统计信息 -->
+          <div class="grid grid-cols-4 gap-4 text-center text-sm">
             <div class="p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
-              <div class="font-medium">{{ progress.completed || 0 }}</div>
-              <div class="text-gray-500">已完成</div>
+              <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ wsProgress.stats.processed || project.processedSlices || 0 }}</div>
+              <div class="text-gray-500">已处理</div>
             </div>
             <div class="p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
-              <div class="font-medium">{{ progress.total || 0 }}</div>
-              <div class="text-gray-500">总数</div>
+              <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ wsProgress.stats.succeeded || project.succeededSlices || 0 }}</div>
+              <div class="text-gray-500">成功</div>
             </div>
             <div class="p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
-              <div class="font-medium">{{ progress.failed || 0 }}</div>
+              <div class="text-2xl font-bold text-red-600 dark:text-red-400">{{ wsProgress.stats.failed || project.failedSlices || 0 }}</div>
               <div class="text-gray-500">失败</div>
             </div>
+            <div class="p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
+              <div class="text-2xl font-bold text-gray-600 dark:text-gray-400">{{ wsProgress.stats.total || project.totalSlices || 0 }}</div>
+              <div class="text-gray-500">总数</div>
+            </div>
           </div>
 
-          <!-- 当前任务 -->
-          <div v-if="currentStep" class="text-sm text-gray-600 dark:text-gray-400">
-            当前: {{ currentStep }}
+          <!-- 当前步骤 -->
+          <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div class="flex items-center gap-2">
+              <div v-if="isProcessing" class="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              <span class="font-medium text-blue-700 dark:text-blue-300">{{ displayStep }}</span>
+            </div>
+          </div>
+
+          <!-- 错误信息 -->
+          <div v-if="wsProgress.hasError || project.status === 'FAILED'" class="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+            <div class="text-red-700 dark:text-red-300">
+              <div class="font-medium mb-1">⚠️ 处理失败</div>
+              <div class="text-sm">{{ wsProgress.error || project.errorMessage }}</div>
+            </div>
+          </div>
+
+          <!-- 完成提示 -->
+          <div v-if="wsProgress.isCompleted || project.status === 'COMPLETED'" class="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+            <div class="text-green-700 dark:text-green-300">
+              <div class="font-medium mb-1">✅ 任务完成</div>
+              <div class="text-sm">视频已生成完成，可以下载或预览</div>
+            </div>
           </div>
         </div>
       </div>
@@ -144,13 +193,22 @@
         </div>
       </div>
     </div>
+
+    <!-- 视频预览弹窗 -->
+    <VideoPreview
+      v-if="showPreview"
+      :video-url="project?.outputVideoUrl"
+      @close="showPreview = false"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useProjectStore } from '@/store/useProjectStore'
+import { useTaskProgress } from '@/composables/useTaskProgress'
+import VideoPreview from '@/components/VideoPreview.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -158,33 +216,75 @@ const projectStore = useProjectStore()
 
 const loading = ref(true)
 const starting = ref(false)
+const cancelling = ref(false)
 const showSlices = ref(false)
+const showPreview = ref(false)
 const project = ref(null)
 const slices = ref([])
-const progress = ref({})
+
+// WebSocket 进度
+const wsProgress = useTaskProgress(null)
+const wsConnected = ref(false)
 
 const sliceCount = computed(() => slices.value.length)
 const canStart = computed(() => {
   return project.value && project.value.status === 'DRAFT'
 })
+const canCancel = computed(() => {
+  return project.value && project.value.status === 'PROCESSING'
+})
 const canDownload = computed(() => {
   return project.value && project.value.status === 'COMPLETED'
 })
-const currentStep = computed(() => {
-  return project.value?.currentStep
+const canPreview = computed(() => {
+  return project.value && (project.value.status === 'COMPLETED' || project.value.outputVideoUrl)
+})
+const isProcessing = computed(() => {
+  return project.value?.status === 'PROCESSING'
+})
+
+// 显示的进度（优先使用 WebSocket 实时进度）
+const displayProgress = computed(() => {
+  return wsProgress.progress.value || project.value?.progress || 0
+})
+
+// 显示的步骤（优先使用 WebSocket 实时步骤）
+const displayStep = computed(() => {
+  return wsProgress.currentStep.value || project.value?.currentStep || '准备中...'
+})
+
+// 监听 WebSocket 连接状态
+wsProgress.on?.('connected', () => {
+  wsConnected.value = true
+})
+
+wsProgress.on?.('disconnected', () => {
+  wsConnected.value = false
 })
 
 onMounted(async () => {
   const id = route.params.id
   try {
     project.value = await projectStore.fetchProject(id)
-    // TODO: 加载切片列表
+
+    // 如果正在处理，启动 WebSocket 监听
+    if (project.value.status === 'PROCESSING') {
+      wsProgress.projectId = id
+      wsProgress.startListening?.()
+    }
+
+    // 加载切片列表
+    // slices.value = await projectStore.fetchSlices(id)
     slices.value = []
   } catch (err) {
     alert('加载失败：' + err.message)
   } finally {
     loading.value = false
   }
+})
+
+onUnmounted(() => {
+  wsProgress.stopListening?.()
 })
 
 const goBack = () => {
@@ -235,8 +335,13 @@ const startGeneration = async () => {
   starting.value = true
   try {
     await projectStore.startTask(project.value.id, {})
-    alert('任务已启动，请关注进度')
-    // TODO: 连接WebSocket获取实时进度
+
+    // 启动 WebSocket 监听
+    wsProgress.projectId = project.value.id
+    wsProgress.startListening?.()
+
+    // 刷新项目状态
+    project.value = await projectStore.fetchProject(project.value.id)
   } catch (err) {
     alert('启动失败：' + err.message)
   } finally {
@@ -244,9 +349,27 @@ const startGeneration = async () => {
   }
 }
 
+const cancelGeneration = async () => {
+  if (!confirm('确定要取消当前任务吗？')) return
+
+  cancelling.value = true
+  try {
+    await projectStore.cancelTask(project.value.id)
+    project.value = await projectStore.fetchProject(project.value.id)
+    wsProgress.stopListening?.()
+  } catch (err) {
+    alert('取消失败：' + err.message)
+  } finally {
+    cancelling.value = false
+  }
+}
+
 const downloadVideo = () => {
-  // TODO: 实现视频下载
-  alert('下载功能开发中')
+  if (project.value?.outputVideoUrl) {
+    window.open(project.value.outputVideoUrl, '_blank')
+  } else {
+    alert('视频文件不可用')
+  }
 }
 
 const deleteProject = async () => {

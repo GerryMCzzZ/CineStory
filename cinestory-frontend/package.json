@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore"
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
+    "test:unit": "vitest",
+    "test:coverage": "vitest --coverage"
   },
   "dependencies": {
     "vue": "^3.4.21",
@@ -15,14 +17,22 @@
     "pinia": "^2.1.7",
     "axios": "^1.6.7",
     "@vueuse/core": "^10.9.0",
-    "dayjs": "^1.11.10"
+    "dayjs": "^1.11.10",
+    "sockjs-client": "^1.6.1",
+    "@stomp/stompjs": "^7.0.0",
+    "video.js": "^8.10.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.4",
     "vite": "^5.2.0",
     "sass": "^1.72.0",
     "unocss": "^0.58.5",
-    "@iconify-json/carbon": "^1.1.35"
+    "@iconify-json/carbon": "^1.1.35",
+    "vitest": "^1.4.0",
+    "@vue/test-utils": "^2.4.5",
+    "jsdom": "^24.0.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-vue": "^9.23.0"
   },
   "engines": {
     "node": ">=18.0.0"
