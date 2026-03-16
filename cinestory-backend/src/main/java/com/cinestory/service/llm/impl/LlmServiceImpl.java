@@ -1,18 +1,21 @@
 package com.cinestory.service.llm.impl;
 
 import com.cinestory.service.llm.LlmService;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 /**
  * LLM 服务实现
- * 支持多种 LLM 提供商
+ * 支持 OpenAI 兼容的 API（包括 OpenAI、Azure OpenAI、各类国内 LLM）
  */
 @Slf4j
 @Service
@@ -36,19 +39,22 @@ public class LlmServiceImpl implements LlmService {
     @Value("${llm.enabled:true}")
     private boolean enabled;
 
+    @Value("${llm.timeout:60}")
+    private int timeout;
+
     @Override
     public String enhancePrompt(String basePrompt, String styleTemplate) {
         if (!enabled || apiKey == null || apiKey.isEmpty()) {
-            log.debug("LLM service disabled or no API key, returning base prompt");
-            return basePrompt + " " + styleTemplate;
+            log.debug("LLM service disabled or no API key, using simple combination");
+            return simpleCombine(basePrompt, styleTemplate);
         }
 
         try {
             String instruction = buildEnhanceInstruction(basePrompt, styleTemplate);
             return callLlm(instruction);
         } catch (Exception e) {
-            log.warn("Failed to enhance prompt with LLM, using fallback", e);
-            return basePrompt + " " + styleTemplate;
+            log.warn("Failed to enhance prompt with LLM: {}, using fallback", e.getMessage());
+            return simpleCombine(basePrompt, styleTemplate);
         }
     }
 
@@ -66,7 +72,7 @@ public class LlmServiceImpl implements LlmService {
             );
             return callLlm(fullInstruction);
         } catch (Exception e) {
-            log.warn("Failed to optimize prompt with LLM", e);
+            log.warn("Failed to optimize prompt with LLM: {}", e.getMessage());
             return originalPrompt;
         }
     }
@@ -79,31 +85,53 @@ public class LlmServiceImpl implements LlmService {
     /**
      * 调用 LLM API
      */
-    private String callLlm(String instruction) {
+    private String callLlm(String userMessage) {
         String url = baseUrl + "/chat/completions";
 
-        Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("model", model);
+        // 构建请求体
+        ChatRequest request = new ChatRequest();
+        request.setModel(model);
+        request.setMessages(List.of(new Message("user", userMessage)));
+        request.setTemperature(0.7);
+        request.setMaxTokens(300);
 
-        Map<String, String> message = new HashMap<>();
-        message.put("role", "user");
-        message.put("content", instruction);
+        // 构建请求头
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(apiKey);
 
-        requestBody.put("messages", new Object[]{message});
-        requestBody.put("temperature", 0.7);
-        requestBody.put("max_tokens", 300);
+        HttpEntity<ChatRequest> entity = new HttpEntity<>(request, headers);
 
-        Map<String, String> headers = new HashMap<>();
-        headers.put("Authorization", "Bearer " + apiKey);
-        headers.put("Content-Type", "application/json");
+        log.debug("Calling LLM API: {} with model: {}", url, model);
 
-        // 使用 RestTemplate 发送请求
-        // 实际实现需要配置 RestTemplate Bean
-        log.debug("Calling LLM API: {}", url);
+        try {
+            // 发送请求
+            ResponseEntity<ChatResponse> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.POST,
+                    entity,
+                    ChatResponse.class
+            );
 
-        // 简化实现，返回空字符串
-        // 实际使用时需要配置 RestTemplate 和处理响应
-        return "";
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                String content = response.getBody().getFirstChoiceContent();
+                log.debug("LLM response received, length: {}", content != null ? content.length() : 0);
+                return content != null ? content.trim() : "";
+            } else {
+                log.warn("LLM API returned non-OK status: {}", response.getStatusCode());
+                return "";
+            }
+        } catch (Exception e) {
+            log.error("Error calling LLM API", e);
+            throw e;
+        }
+    }
+
+    /**
+     * 简单组合提示词（降级方案）
+     */
+    private String simpleCombine(String basePrompt, String styleTemplate) {
+        return basePrompt + " " + styleTemplate;
     }
 
     /**
@@ -126,5 +154,85 @@ public class LlmServiceImpl implements LlmService {
 
                 Enhanced prompt:
                 """, basePrompt, styleTemplate);
+    }
+
+    /**
+     * 聊天请求
+     */
+    @Data
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class ChatRequest {
+        private String model;
+        private List<Message> messages;
+        private Double temperature;
+        private Integer maxTokens;
+
+        public void setTemperature(Double temp) {
+            this.temperature = temp;
+        }
+
+        public void setMaxTokens(Integer tokens) {
+            this.maxTokens = tokens;
+        }
+    }
+
+    /**
+     * 消息
+     */
+    @Data
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class Message {
+        private String role;
+        private String content;
+
+        public Message(String role, String content) {
+            this.role = role;
+            this.content = content;
+        }
+    }
+
+    /**
+     * 聊天响应
+     */
+    @Data
+    public static class ChatResponse {
+        private String id;
+        private String object;
+        private Long created;
+        private String model;
+        private List<Choice> choices;
+        private Usage usage;
+
+        public String getFirstChoiceContent() {
+            if (choices != null && !choices.isEmpty()) {
+                Message message = choices.get(0).getMessage();
+                return message != null ? message.getContent() : null;
+            }
+            return null;
+        }
+    }
+
+    /**
+     * 选择项
+     */
+    @Data
+    public static class Choice {
+        private Integer index;
+        private Message message;
+        @JsonProperty("finish_reason")
+        private String finishReason;
+    }
+
+    /**
+     * 使用情况
+     */
+    @Data
+    public static class Usage {
+        @JsonProperty("prompt_tokens")
+        private Integer promptTokens;
+        @JsonProperty("completion_tokens")
+        private Integer completionTokens;
+        @JsonProperty("total_tokens")
+        private Integer totalTokens;
     }
 }

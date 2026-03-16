@@ -1,0 +1,20 @@
+package com.cinestory.model.dto.auth;
+
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * 刷新 Token 请求 DTO
+ */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class RefreshTokenRequest {
+
+    @NotBlank(message = "Token 不能为空")
+    private String refreshToken;
+}

@@ -1,8 +1,11 @@
 package com.cinestory.repository;
 
 import com.cinestory.model.entity.VideoGeneration;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -25,6 +28,11 @@ public interface VideoGenerationRepository extends JpaRepository<VideoGeneration
     List<VideoGeneration> findByStatusOrderByCreatedAtAsc(VideoGeneration.GenerationStatus status);
 
     /**
+     * 根据状态分页查询
+     */
+    Page<VideoGeneration> findByStatus(VideoGeneration.GenerationStatus status, Pageable pageable);
+
+    /**
      * 根据多个状态查询生成记录
      */
     List<VideoGeneration> findByStatusIn(List<VideoGeneration.GenerationStatus> statuses);
@@ -33,6 +41,27 @@ public interface VideoGenerationRepository extends JpaRepository<VideoGeneration
      * 根据项目ID查询所有生成记录
      */
     List<VideoGeneration> findByProjectId(Long projectId);
+
+    /**
+     * 根据项目ID分页查询
+     */
+    Page<VideoGeneration> findByProjectId(Long projectId, Pageable pageable);
+
+    /**
+     * 根据项目ID和状态分页查询
+     */
+    Page<VideoGeneration> findByProjectIdAndStatus(Long projectId, VideoGeneration.GenerationStatus status, Pageable pageable);
+
+    /**
+     * 根据项目ID、状态和提供商分页查询
+     */
+    @Query("SELECT vg FROM VideoGeneration vg WHERE vg.projectId = :projectId AND vg.status = :status AND vg.provider = :provider")
+    Page<VideoGeneration> findByProjectIdAndStatusAndProvider(
+            @Param("projectId") Long projectId,
+            @Param("status") VideoGeneration.GenerationStatus status,
+            @Param("provider") String provider,
+            Pageable pageable
+    );
 
     /**
      * 根据第三方任务ID查询
@@ -65,4 +94,10 @@ public interface VideoGenerationRepository extends JpaRepository<VideoGeneration
      * 根据提供商和状态统计
      */
     long countByProviderAndStatus(String provider, VideoGeneration.GenerationStatus status);
+
+    /**
+     * 统计指定提供商前缀的记录数
+     */
+    @Query("SELECT COUNT(vg) FROM VideoGeneration vg WHERE vg.provider LIKE CONCAT(:prefix, '%')")
+    long countByProviderStartingWith(@Param("prefix") String prefix);
 }

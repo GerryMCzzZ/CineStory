@@ -142,12 +142,14 @@
 
         <!-- 提交按钮 -->
         <div class="flex justify-end gap-4 pt-4">
-          <button type="button" @click="goBack" class="btn btn-secondary">
+          <button type="button" @click="goBack" class="px-5 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors font-medium">
             取消
           </button>
-          <button type="submit" :disabled="submitting || !form.content" class="btn-primary" :class="{ 'opacity-50 cursor-not-allowed': submitting || !form.content }">
-            <span v-if="submitting">创建中...</span>
-            <span v-else>🚀 创建项目</span>
+          <button type="submit" :disabled="submitting || !form.content" class="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center gap-2">
+            <svg v-if="submitting" class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>{{ submitting ? '创建中...' : '创建项目' }}</span>
           </button>
         </div>
       </form>
@@ -250,7 +252,7 @@ const handleContentChange = (file, content) => {
 
 const handleSubmit = async () => {
   if (!form.name || !form.content) {
-    alert('请填写项目名称和内容')
+    window.toast?.warning('请填写项目名称和内容')
     return
   }
 
@@ -264,9 +266,10 @@ const handleSubmit = async () => {
       novelAuthor: form.novelAuthor,
       styleTemplateId: form.styleId
     })
+    window.toast?.success('项目创建成功')
     router.push(`/projects/${project.id}`)
   } catch (err) {
-    alert('创建失败：' + err.message)
+    window.toast?.error(err.response?.data?.message || err.message || '创建失败')
   } finally {
     submitting.value = false
   }

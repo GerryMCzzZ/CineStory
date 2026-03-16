@@ -103,3 +103,30 @@ rebuild: ## 重新构建并启动服务
 # 生产部署
 deploy: ## 生产环境部署
 	docker-compose -f docker-compose.yml --env-file .env.prod up -d --build
+
+# 初始化 MinIO bucket
+init-minio: ## 初始化 MinIO bucket（需要先启动 MinIO）
+	docker run --rm --network cinestory-network minio/mc:latest \
+		alias set minio http://minio:9000 minioadmin minioadmin && \
+		mc mb minio/cinestory --ignore-existing && \
+		mc anonymous set download minio/cinestory
+
+# 查看环境变量
+env-check: ## 检查环境变量配置
+	@echo "检查环境变量..."
+	@test -f cinestory-backend/.env || echo "警告: cinestory-backend/.env 不存在"
+	@test -f cinestory-frontend/.env.local || echo "警告: cinestory-frontend/.env.local 不存在"
+	@echo "环境变量检查完成"
+
+# 重置数据库（危险操作！）
+reset-db: ## 重置数据库（删除所有数据）
+	@read -p "确定要重置数据库吗？这将删除所有数据！ [y/N] " confirm; \
+	if [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ]; then \
+		docker-compose exec mysql mysql -uroot -pcinestory123 -e "DROP DATABASE IF EXISTS cinestory; CREATE DATABASE cinestory CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"; \
+		docker-compose restart backend; \
+		echo "数据库已重置"; \
+	fi
+
+# 查看数据库用户
+show-users: ## 查看数据库中的用户
+	docker-compose exec mysql mysql -uroot -pcinestory123 cinestory -e "SELECT id, username, email, role, quota_total, quota_used FROM users;"

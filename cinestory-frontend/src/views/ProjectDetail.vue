@@ -208,6 +208,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useProjectStore } from '@/store/useProjectStore'
 import { useTaskProgress } from '@/composables/useTaskProgress'
+import { confirmDanger } from '@/composables/useConfirm'
 import VideoPreview from '@/components/VideoPreview.vue'
 
 const router = useRouter()
@@ -277,7 +278,7 @@ onMounted(async () => {
     // slices.value = await projectStore.fetchSlices(id)
     slices.value = []
   } catch (err) {
-    alert('加载失败：' + err.message)
+    window.toast?.error(err.message || '加载失败')
   } finally {
     loading.value = false
   }
@@ -342,23 +343,30 @@ const startGeneration = async () => {
 
     // 刷新项目状态
     project.value = await projectStore.fetchProject(project.value.id)
+    window.toast?.success('任务已启动，请耐心等待')
   } catch (err) {
-    alert('启动失败：' + err.message)
+    window.toast?.error(err.message || '启动失败')
   } finally {
     starting.value = false
   }
 }
 
 const cancelGeneration = async () => {
-  if (!confirm('确定要取消当前任务吗？')) return
+  const confirmed = await confirmDanger({
+    message: '确定要取消当前生成任务吗？已生成的部分将保留。',
+    warning: '取消后无法恢复，需要重新启动任务。'
+  })
+
+  if (!confirmed) return
 
   cancelling.value = true
   try {
     await projectStore.cancelTask(project.value.id)
     project.value = await projectStore.fetchProject(project.value.id)
     wsProgress.stopListening?.()
+    window.toast?.info('任务已取消')
   } catch (err) {
-    alert('取消失败：' + err.message)
+    window.toast?.error(err.message || '取消失败')
   } finally {
     cancelling.value = false
   }
@@ -366,19 +374,28 @@ const cancelGeneration = async () => {
 
 const downloadVideo = () => {
   if (project.value?.outputVideoUrl) {
+    window.toast?.info('开始下载视频...')
     window.open(project.value.outputVideoUrl, '_blank')
   } else {
-    alert('视频文件不可用')
+    window.toast?.warning('视频文件不可用')
   }
 }
 
 const deleteProject = async () => {
-  if (!confirm('确定要删除这个项目吗？')) return
+  const confirmed = await confirmDanger({
+    message: '确定要删除这个项目吗？',
+    warning: '删除后无法恢复，相关的视频文件也会被删除。',
+    confirmText: 'DELETE'
+  })
+
+  if (!confirmed) return
+
   try {
     await projectStore.deleteProject(project.value.id)
+    window.toast?.success('项目已删除')
     router.push('/projects')
   } catch (err) {
-    alert('删除失败：' + err.message)
+    window.toast?.error(err.message || '删除失败')
   }
 }
 </script>

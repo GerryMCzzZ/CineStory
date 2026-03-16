@@ -70,6 +70,7 @@ spring:
 
 # Video Generation Configuration
 video:
+  # 生成服务配置
   generation:
     # Provider configurations
     providers:
@@ -100,35 +101,53 @@ video:
         max-retries: 3
         timeout: 300000
         max-duration: 5
-
     # Default settings
     default-provider: runway
     default-aspect-ratio: "16:9"
     default-duration: 5
     poll-interval: 5000
 
+  # 视频输出配置
+  output:
+    path: ${VIDEO_OUTPUT_PATH:./storage/output}
+    width: 1920
+    height: 1080
+    fps: 24
+    bitrate: 2M
+
+  # 视频标准化
+  normalize:
+    enabled: true
+
+  # 转场效果
+  transition:
+    enabled: false
+    duration: 0.5
+    type: fade
+    # 支持的转场类型: fade, wipe, slide, fadeblack, fadewhite,
+    # dissolve, pixelize, reveal, curtain, circlecrop, rectcrop
+
+  # 片头片尾
+  intro:
+    enabled: false
+    path: ${VIDEO_INTRO_PATH:./storage/assets/intro.mp4}
+  outro:
+    enabled: false
+    path: ${VIDEO_OUTRO_PATH:./storage/assets/outro.mp4}
+
+  # 提示词配置
+  prompt:
+    max-length: 500
+
 # LLM Configuration
 llm:
+  enabled: ${LLM_ENABLED:false}
   provider: openai
   api-key: ${LLM_API_KEY:}
   model: gpt-4
   base-url: ${LLM_BASE_URL:https://api.openai.com/v1}
   timeout: 120000
   max-retries: 3
-
-# Text Splitting Configuration
-text:
-  splitting:
-    max-slice-length: 500
-    min-slice-length: 50
-    context-overlap: 100
-    preserve-dialogue: true
-
-# FFmpeg Configuration
-ffmpeg:
-  path: ${FFMPEG_PATH:ffmpeg}
-  temp-dir: ${java.io.tmpdir}/cinestory/ffmpeg
-  output-dir: ${user.home}/cinestory/output
 
 # MinIO Configuration
 minio:

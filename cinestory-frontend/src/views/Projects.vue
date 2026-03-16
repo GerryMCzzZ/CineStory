@@ -1,9 +1,12 @@
 <template>
   <div class="projects">
     <div class="flex justify-between items-center mb-8">
-      <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-200">我的项目</h1>
-      <router-link to="/projects/create" class="btn-primary">
-        + 新建项目
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">我的项目</h1>
+      <router-link to="/projects/create" class="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-all duration-200 font-medium flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        新建项目
       </router-link>
     </div>
 
@@ -80,10 +83,13 @@
     <!-- 空状态 -->
     <div v-else class="text-center py-16">
       <div class="text-6xl mb-4">📁</div>
-      <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">暂无项目</h3>
-      <p class="text-gray-600 dark:text-gray-400 mb-6">创建你的第一个项目开始创作吧</p>
-      <router-link to="/projects/create" class="btn-primary">
-        + 新建项目
+      <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">暂无项目</h3>
+      <p class="text-gray-500 dark:text-gray-400 mb-6">创建你的第一个项目开始创作吧</p>
+      <router-link to="/projects/create" class="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-all duration-200 font-medium">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        新建项目
       </router-link>
     </div>
   </div>

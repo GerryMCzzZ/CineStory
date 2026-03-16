@@ -101,18 +101,16 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, computed } from 'vue'
 
 const props = defineProps({
   videoUrl: {
     type: String,
     default: ''
-  },
-  show: {
-    type: Boolean,
-    default: false
   }
 })
+
+const show = computed(() => !!props.videoUrl)
 
 const emit = defineEmits(['close'])
 
@@ -163,11 +161,15 @@ const formatTime = (seconds) => {
 }
 
 // 监听显示状态变化
-watch(() => props.show, async (newVal) => {
-  if (newVal) {
+watch(() => props.videoUrl, async (newUrl) => {
+  if (newUrl) {
     await nextTick()
     if (videoRef.value) {
       videoRef.value.load()
+      // 自动播放
+      videoRef.value.play().catch(() => {
+        // 自动播放可能被浏览器阻止
+      })
     }
   }
 })
