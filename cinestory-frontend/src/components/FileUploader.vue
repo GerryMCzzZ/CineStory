@@ -180,7 +180,7 @@ const handleDrop = (event) => {
   }
 }
 
-const processFile = (selectedFile) {
+const processFile = (selectedFile) => {
   // 清除之前的错误
   error.value = ''
 
