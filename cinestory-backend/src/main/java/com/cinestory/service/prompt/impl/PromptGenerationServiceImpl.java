@@ -36,10 +36,9 @@ public class PromptGenerationServiceImpl implements PromptGenerationService {
         String finalPrompt = truncatePrompt(enhancedPrompt);
 
         return VideoPrompt.builder()
-                .textSliceId(textSlice.getId())
-                .prompt(finalPrompt)
-                .negativePrompt(negativePrompt)
-                .sceneType(textSlice.getSceneType().name())
+                .sliceId(textSlice.getId())
+                .visualPrompt(finalPrompt)
+                .motionPrompt("")
                 .build();
     }
 
@@ -99,7 +98,7 @@ public class PromptGenerationServiceImpl implements PromptGenerationService {
     /**
      * 获取场景类型描述
      */
-    private String getSceneTypeDescription(com.cinestory.model.entity.SceneType sceneType) {
+    private String getSceneTypeDescription(TextSlice.SceneType sceneType) {
         return switch (sceneType) {
             case DIALOGUE -> "Character dialogue scene, focus on facial expressions and lip sync";
             case DESCRIPTION -> "Descriptive scene, detailed environment visualization";

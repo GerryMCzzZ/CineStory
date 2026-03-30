@@ -267,11 +267,11 @@ public class CodeReviewService {
         long successCount = report.getIssueCountBySeverity(Issue.Severity.SUCCESS);
 
         summary.setTotalIssues(totalIssues);
-        summary.setErrorCount(errorCount);
-        summary.setWarningCount(warningCount);
-        summary.setSuggestionCount(suggestionCount);
-        summary.setInfoCount(infoCount);
-        summary.setSuccessCount(successCount);
+        summary.setErrorCount((int) errorCount);
+        summary.setWarningCount((int) warningCount);
+        summary.setSuggestionCount((int) suggestionCount);
+        summary.setInfoCount((int) infoCount);
+        summary.setSuccessCount((int) successCount);
 
         // 生成评估等级
         if (errorCount > 0) {

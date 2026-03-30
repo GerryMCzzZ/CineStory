@@ -23,6 +23,11 @@ public interface VideoGenerationRepository extends JpaRepository<VideoGeneration
     List<VideoGeneration> findBySliceId(Long sliceId);
 
     /**
+     * 根据多个切片ID查询生成记录
+     */
+    List<VideoGeneration> findBySliceIdIn(List<Long> sliceIds);
+
+    /**
      * 根据状态查询生成记录
      */
     List<VideoGeneration> findByStatusOrderByCreatedAtAsc(VideoGeneration.GenerationStatus status);
@@ -36,32 +41,6 @@ public interface VideoGenerationRepository extends JpaRepository<VideoGeneration
      * 根据多个状态查询生成记录
      */
     List<VideoGeneration> findByStatusIn(List<VideoGeneration.GenerationStatus> statuses);
-
-    /**
-     * 根据项目ID查询所有生成记录
-     */
-    List<VideoGeneration> findByProjectId(Long projectId);
-
-    /**
-     * 根据项目ID分页查询
-     */
-    Page<VideoGeneration> findByProjectId(Long projectId, Pageable pageable);
-
-    /**
-     * 根据项目ID和状态分页查询
-     */
-    Page<VideoGeneration> findByProjectIdAndStatus(Long projectId, VideoGeneration.GenerationStatus status, Pageable pageable);
-
-    /**
-     * 根据项目ID、状态和提供商分页查询
-     */
-    @Query("SELECT vg FROM VideoGeneration vg WHERE vg.projectId = :projectId AND vg.status = :status AND vg.provider = :provider")
-    Page<VideoGeneration> findByProjectIdAndStatusAndProvider(
-            @Param("projectId") Long projectId,
-            @Param("status") VideoGeneration.GenerationStatus status,
-            @Param("provider") String provider,
-            Pageable pageable
-    );
 
     /**
      * 根据第三方任务ID查询

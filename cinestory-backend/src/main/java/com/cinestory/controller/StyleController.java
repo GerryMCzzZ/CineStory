@@ -23,24 +23,21 @@ import java.util.stream.Collectors;
  */
 @Tag(name = "风格模板", description = "视频风格模板的查询操作")
 @RestController
-@RequestMapping("/api/styles")
+@RequestMapping("/styles")
 @RequiredArgsConstructor
 public class StyleController {
 
     private final StyleTemplateService styleTemplateService;
 
-    @Operation(summary = "获取风格模板列表", description = "分页查询风格模板列表，支持按分类筛选")
+    @Operation(summary = "获取风格模板列表", description = "分页查询风格模板列表")
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<StyleTemplateResponse>>> getStyles(
             @Parameter(description = "页码（从0开始）") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "每页大小") @RequestParam(defaultValue = "12") int size,
-            @Parameter(description = "风格分类（可选）") @RequestParam(required = false) String category,
             @Parameter(description = "排序字段") @RequestParam(defaultValue = "name") String sortBy) {
 
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(sortBy).ascending());
-        Page<StyleTemplate> styles = category != null
-                ? styleTemplateService.getByCategory(category, pageRequest)
-                : styleTemplateService.getAllStyles(pageRequest);
+        Page<StyleTemplate> styles = styleTemplateService.getAllStyles(pageRequest);
 
         List<StyleTemplateResponse> responses = styles.getContent().stream()
                 .map(StyleTemplateResponse::fromEntity)
@@ -53,7 +50,7 @@ public class StyleController {
                 styles.getSize()
         );
 
-        return ResponseEntity.ok(ApiResponse.page(pageResponse));
+        return ResponseEntity.ok(ApiResponse.success(pageResponse));
     }
 
     @Operation(summary = "获取系统预设风格", description = "获取系统内置的风格模板列表")
@@ -74,13 +71,6 @@ public class StyleController {
                 .map(StyleTemplateResponse::fromEntity)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(ApiResponse.success(responses));
-    }
-
-    @Operation(summary = "获取风格分类", description = "获取所有可用的风格分类列表")
-    @GetMapping("/categories")
-    public ResponseEntity<ApiResponse<List<String>>> getCategories() {
-        List<String> categories = styleTemplateService.getCategories();
-        return ResponseEntity.ok(ApiResponse.success(categories));
     }
 
     @Operation(summary = "获取风格详情", description = "根据ID获取风格模板详细信息")

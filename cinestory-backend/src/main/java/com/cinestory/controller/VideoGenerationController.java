@@ -35,11 +35,10 @@ public class VideoGenerationController {
      * 分页查询视频生成历史
      */
     @GetMapping
-    @Operation(summary = "分页查询视频生成历史", description = "支持按项目ID、状态、提供商筛选")
+    @Operation(summary = "分页查询视频生成历史", description = "支持按状态、提供商筛选")
     public ResponseEntity<ApiResponse<PageResponse<VideoGenerationResponse>>> getHistory(
             @Parameter(description = "页码（从0开始）") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "每页大小") @RequestParam(defaultValue = "20") int size,
-            @Parameter(description = "项目ID") @RequestParam(required = false) Long projectId,
             @Parameter(description = "状态") @RequestParam(required = false) VideoGeneration.GenerationStatus status,
             @Parameter(description = "提供商") @RequestParam(required = false) String provider,
             @Parameter(description = "排序字段") @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -49,31 +48,17 @@ public class VideoGenerationController {
         Pageable pageable = PageRequest.of(page, size, sort);
 
         Page<VideoGenerationResponse> result = videoGenerationService.getHistory(
-                pageable, projectId, status, provider
+                pageable, status, provider
         );
 
-        PageResponse<VideoGenerationResponse> pageResponse = PageResponse.<VideoGenerationResponse>builder()
-                .content(result.getContent())
-                .pageNo(result.getNumber())
-                .pageSize(result.getSize())
-                .totalElements(result.getTotalElements())
-                .totalPages(result.getTotalPages())
-                .last(result.isLast())
-                .build();
+        PageResponse<VideoGenerationResponse> pageResponse = PageResponse.of(
+                result.getContent(),
+                result.getTotalElements(),
+                result.getNumber(),
+                result.getSize()
+        );
 
         return ResponseEntity.ok(ApiResponse.success(pageResponse));
-    }
-
-    /**
-     * 查询指定项目的生成历史
-     */
-    @GetMapping("/project/{projectId}")
-    @Operation(summary = "查询项目的生成历史", description = "获取指定项目的所有视频生成记录")
-    public ResponseEntity<ApiResponse<List<VideoGenerationResponse>>> getProjectHistory(
-            @Parameter(description = "项目ID") @PathVariable Long projectId
-    ) {
-        List<VideoGenerationResponse> history = videoGenerationService.getProjectHistory(projectId);
-        return ResponseEntity.ok(ApiResponse.success(history));
     }
 
     /**

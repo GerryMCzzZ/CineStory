@@ -1,9 +1,8 @@
 package com.cinestory.service.scheduler;
 
-import com.cinestory.model.entity.GenerationStatus;
-import com.cinestory.model.entity.ProjectStatus;
 import com.cinestory.model.entity.VideoGeneration;
-import com.cinestory.repository.ProjectRepository;
+import com.cinestory.model.entity.VideoGeneration.GenerationStatus;
+import com.cinestory.repository.TextSliceRepository;
 import com.cinestory.repository.VideoGenerationRepository;
 import com.cinestory.service.video.VideoGenerationService;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +23,7 @@ import java.util.List;
 public class VideoGenerationPollScheduler {
 
     private final VideoGenerationRepository videoGenerationRepository;
-    private final ProjectRepository projectRepository;
+    private final TextSliceRepository textSliceRepository;
     private final VideoGenerationService videoGenerationService;
 
     /**
@@ -71,9 +70,6 @@ public class VideoGenerationPollScheduler {
 
         // 检查状态
         videoGenerationService.checkAndUpdateStatus(generation.getId());
-
-        // 更新项目进度
-        updateProjectProgress(generation.getProjectId());
     }
 
     /**
@@ -102,54 +98,6 @@ public class VideoGenerationPollScheduler {
         if (generation.getRetryCount() < 3) {
             videoGenerationService.retryFailedGeneration(generation.getId());
         }
-    }
-
-    /**
-     * 更新项目进度
-     */
-    private void updateProjectProgress(Long projectId) {
-        projectRepository.findById(projectId).ifPresent(project -> {
-            if (project.getStatus() != ProjectStatus.PROCESSING) {
-                return;
-            }
-
-            // 统计视频生成进度
-            List<VideoGeneration> allGenerations = videoGenerationRepository
-                    .findByProjectId(projectId);
-
-            int total = allGenerations.size();
-            long completed = allGenerations.stream()
-                    .filter(g -> g.getStatus() == GenerationStatus.COMPLETED)
-                    .count();
-            long failed = allGenerations.stream()
-                    .filter(g -> g.getStatus() == GenerationStatus.FAILED)
-                    .count();
-
-            if (total > 0) {
-                int progress = (int) ((completed + failed) * 100 / total);
-                project.setProgress(progress);
-                project.setProcessedSlices((int) (completed + failed));
-                project.setSucceededSlices((int) completed);
-                project.setFailedSlices((int) failed);
-
-                // 检查是否全部完成
-                if (completed + failed >= total) {
-                    if (failed == 0) {
-                        project.setStatus(ProjectStatus.COMPLETED);
-                        project.setCompletedAt(LocalDateTime.now());
-                        project.setCurrentStep("视频生成完成");
-                    } else if (completed == 0) {
-                        project.setStatus(ProjectStatus.FAILED);
-                        project.setCurrentStep("视频生成失败");
-                    } else {
-                        project.setStatus(ProjectStatus.COMPLETED);
-                        project.setCurrentStep("部分完成，有 " + failed + " 个片段失败");
-                    }
-                }
-
-                projectRepository.save(project);
-            }
-        });
     }
 
     /**

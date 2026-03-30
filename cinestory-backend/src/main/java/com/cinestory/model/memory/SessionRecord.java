@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -67,7 +68,7 @@ public class SessionRecord {
      * 创建当前时间的会话记录
      */
     public static SessionRecord createCurrent(String topic) {
-        String now = java.time.LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
         String date = now.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         String time = now.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
 

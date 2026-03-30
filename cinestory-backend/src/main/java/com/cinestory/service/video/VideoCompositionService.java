@@ -2,10 +2,13 @@ package com.cinestory.service.video;
 
 import com.cinestory.model.entity.VideoGeneration;
 import com.cinestory.service.storage.StorageService;
+import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import lombok.Data;
 
 import java.io.BufferedReader;
 import java.io.IOException;

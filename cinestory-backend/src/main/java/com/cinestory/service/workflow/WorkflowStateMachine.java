@@ -2,6 +2,8 @@ package com.cinestory.service.workflow;
 
 import com.cinestory.model.entity.Project;
 import com.cinestory.repository.ProjectRepository;
+import com.cinestory.service.video.VideoCompositionService;
+import com.cinestory.service.video.VideoGenerationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -88,7 +90,6 @@ public class WorkflowStateMachine {
         project.setStartedAt(LocalDateTime.now());
         project.setCurrentStep(WorkflowStep.INIT.getDescription());
         project.setProgress(WorkflowStep.INIT.getProgressPercent());
-        project.setErrorMessage(null);
 
         projectRepository.save(project);
         log.info("Started workflow for project: {}", projectId);
@@ -151,7 +152,6 @@ public class WorkflowStateMachine {
         project.setStatus(Project.ProjectStatus.FAILED);
         project.setCompletedAt(LocalDateTime.now());
         project.setCurrentStep("失败");
-        project.setErrorMessage(errorMessage);
 
         projectRepository.save(project);
         log.error("Failed workflow for project {}: {}", projectId, errorMessage);
@@ -169,9 +169,6 @@ public class WorkflowStateMachine {
         project.setStatus(Project.ProjectStatus.CANCELLED);
         project.setCompletedAt(LocalDateTime.now());
         project.setCurrentStep("已取消");
-        if (reason != null) {
-            project.setErrorMessage("取消原因: " + reason);
-        }
 
         projectRepository.save(project);
         log.info("Cancelled workflow for project: {}", projectId);
@@ -193,7 +190,6 @@ public class WorkflowStateMachine {
         project.setStartedAt(LocalDateTime.now());
         project.setCurrentStep(WorkflowStep.INIT.getDescription());
         project.setProgress(WorkflowStep.INIT.getProgressPercent());
-        project.setErrorMessage(null);
         project.setCompletedAt(null);
 
         projectRepository.save(project);
@@ -243,7 +239,6 @@ public class WorkflowStateMachine {
                 .progress(project.getProgress())
                 .startedAt(project.getStartedAt())
                 .completedAt(project.getCompletedAt())
-                .errorMessage(project.getErrorMessage())
                 .outputVideoUrl(project.getOutputVideoUrl())
                 .canStart(canTransitionTo(projectId, Project.ProjectStatus.PROCESSING))
                 .canCancel(canTransitionTo(projectId, Project.ProjectStatus.CANCELLED))
@@ -271,7 +266,6 @@ public class WorkflowStateMachine {
         private Integer progress;
         private LocalDateTime startedAt;
         private LocalDateTime completedAt;
-        private String errorMessage;
         private String outputVideoUrl;
         private boolean canStart;
         private boolean canCancel;

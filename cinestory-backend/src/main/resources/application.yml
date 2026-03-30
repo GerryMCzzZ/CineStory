@@ -9,9 +9,9 @@ spring:
 
   # Database Configuration
   datasource:
-    url: jdbc:mysql://localhost:3306/cinestory?useUnicode=true&characterEncoding=utf8mb4&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://localhost:3306/cinestory?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
     username: root
-    password: cinestory123
+    password: root123456
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 20
@@ -23,7 +23,7 @@ spring:
   # JPA Configuration
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: none
     show-sql: false
     properties:
       hibernate:
@@ -40,9 +40,9 @@ spring:
   # Redis Configuration
   data:
     redis:
-      host: localhost
+      host: 172.19.222.17
       port: 6379
-      password:
+      password: 12345r
       database: 0
       lettuce:
         pool:
@@ -187,7 +187,6 @@ management:
     web:
       exposure:
         include: health,info,metrics,prometheus
-      base-path: /api/actuator
     health:
       show-details: always
 

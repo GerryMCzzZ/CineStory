@@ -5,11 +5,10 @@ import com.cinestory.model.dto.request.CreateProjectRequest;
 import com.cinestory.model.dto.request.StartTaskRequest;
 import com.cinestory.model.dto.request.UpdateProjectRequest;
 import com.cinestory.model.entity.Project;
-import com.cinestory.model.entity.ProjectStatus;
 import com.cinestory.repository.ProjectRepository;
 import com.cinestory.service.ProjectService;
 import com.cinestory.service.StyleTemplateService;
-import com.cinestory.service.TextSplitterService;
+import com.cinestory.service.text.TextSplitterService;
 import com.cinestory.service.websocket.ProgressWebSocketService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,12 +46,10 @@ public class ProjectServiceImpl implements ProjectService {
                 .novelContent(request.getNovelContent())
                 .styleTemplateId(request.getStyleTemplateId())
                 .configJson(request.getConfigJson())
-                .status(ProjectStatus.DRAFT)
+                .status(Project.ProjectStatus.DRAFT)
                 .progress(0)
-                .totalSlices(0)
-                .processedSlices(0)
-                .succeededSlices(0)
-                .failedSlices(0)
+                .totalCharacters(0)
+                .progress(0)
                 .build();
 
         Project saved = projectRepository.save(project);
@@ -101,7 +98,7 @@ public class ProjectServiceImpl implements ProjectService {
         Project project = getProjectById(id);
 
         // 只允许删除草稿或已完成的项目
-        if (project.getStatus() == ProjectStatus.PROCESSING) {
+        if (project.getStatus() == Project.ProjectStatus.PROCESSING) {
             throw new IllegalStateException("Cannot delete project in processing status");
         }
 
@@ -115,12 +112,12 @@ public class ProjectServiceImpl implements ProjectService {
 
         Project project = getProjectById(id);
 
-        if (project.getStatus() != ProjectStatus.DRAFT) {
+        if (project.getStatus() != Project.ProjectStatus.DRAFT) {
             throw new IllegalStateException("Project is not in DRAFT status");
         }
 
         // 更新项目状态
-        project.setStatus(ProjectStatus.PROCESSING);
+        project.setStatus(Project.ProjectStatus.PROCESSING);
         project.setStartedAt(LocalDateTime.now());
         project.setCurrentStep("正在初始化...");
         project.setProgress(0);
@@ -143,11 +140,11 @@ public class ProjectServiceImpl implements ProjectService {
 
         Project project = getProjectById(id);
 
-        if (project.getStatus() != ProjectStatus.PROCESSING) {
+        if (project.getStatus() != Project.ProjectStatus.PROCESSING) {
             throw new IllegalStateException("Project is not in processing status");
         }
 
-        project.setStatus(ProjectStatus.CANCELLED);
+        project.setStatus(Project.ProjectStatus.CANCELLED);
         project.setCurrentStep("任务已取消");
         projectRepository.save(project);
 

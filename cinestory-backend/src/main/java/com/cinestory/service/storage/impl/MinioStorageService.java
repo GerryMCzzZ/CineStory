@@ -2,8 +2,8 @@ package com.cinestory.service.storage.impl;
 
 import com.cinestory.service.storage.StorageService;
 import io.minio.MinioClient;
-import io.minio.PutObjectArgs;
 import io.minio.GetObjectArgs;
+import io.minio.UploadObjectArgs;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.io.InputStream;
 import java.io.BufferedInputStream;
 import java.nio.file.Files;
@@ -72,8 +72,8 @@ public class MinioStorageService implements StorageService {
             String objectName = "videos/" + projectId + "/" + videoPath.getFileName();
 
             if (enabled && minioClient != null) {
-                minioClient.putObject(
-                        PutObjectArgs.builder()
+                minioClient.uploadObject(
+                        UploadObjectArgs.builder()
                                 .bucket(bucketName)
                                 .object(objectName)
                                 .filename(videoPath.toString())

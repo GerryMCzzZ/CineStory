@@ -28,7 +28,7 @@ import java.util.UUID;
 @Tag(name = "文件上传", description = "文件上传、预览和配置查询")
 @Slf4j
 @RestController
-@RequestMapping("/api/files")
+@RequestMapping("/files")
 @RequiredArgsConstructor
 public class FileUploadController {
 

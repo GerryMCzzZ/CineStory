@@ -29,13 +29,8 @@ public class StyleTemplateServiceImpl implements StyleTemplateService {
     }
 
     @Override
-    public Page<StyleTemplate> getByCategory(String category, Pageable pageable) {
-        return styleTemplateRepository.findByCategory(category, pageable);
-    }
-
-    @Override
     public List<StyleTemplate> getSystemStyles() {
-        return styleTemplateRepository.findByIsSystemTrueOrderByCategoryAscNameAsc();
+        return styleTemplateRepository.findByIsSystemTrueOrderByCreatedAtAsc();
     }
 
     @Override
@@ -47,11 +42,6 @@ public class StyleTemplateServiceImpl implements StyleTemplateService {
     public StyleTemplate getById(Long id) {
         return styleTemplateRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Style template not found with id: " + id));
-    }
-
-    @Override
-    public List<String> getCategories() {
-        return styleTemplateRepository.findAllCategories();
     }
 
     @Override

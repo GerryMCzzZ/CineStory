@@ -19,15 +19,19 @@ public class StyleTemplateResponse {
 
     private Long id;
     private String name;
+    private String nameEn;
     private String description;
-    private String category;
-    private String previewImage;
     private Boolean isSystem;
-    private String promptTemplate;
-    private String negativePrompt;
-    private Integer videoDuration;
-    private Integer fps;
-    private String aspectRatio;
+    private Boolean isPublic;
+    private String visualStyle;
+    private String characterStyle;
+    private String backgroundStyle;
+    private String negativePrompts;
+    private String defaultCamera;
+    private String defaultMotion;
+    private String previewImageUrl;
+    private String configJson;
+    private Long userId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -38,15 +42,19 @@ public class StyleTemplateResponse {
         return StyleTemplateResponse.builder()
                 .id(entity.getId())
                 .name(entity.getName())
+                .nameEn(entity.getNameEn())
                 .description(entity.getDescription())
-                .category(entity.getCategory())
-                .previewImage(entity.getPreviewImage())
                 .isSystem(entity.getIsSystem())
-                .promptTemplate(entity.getPromptTemplate())
-                .negativePrompt(entity.getNegativePrompt())
-                .videoDuration(entity.getVideoDuration())
-                .fps(entity.getFps())
-                .aspectRatio(entity.getAspectRatio())
+                .isPublic(entity.getIsPublic())
+                .visualStyle(entity.getVisualStyle())
+                .characterStyle(entity.getCharacterStyle())
+                .backgroundStyle(entity.getBackgroundStyle())
+                .negativePrompts(entity.getNegativePrompts())
+                .defaultCamera(entity.getDefaultCamera())
+                .defaultMotion(entity.getDefaultMotion())
+                .previewImageUrl(entity.getPreviewImageUrl())
+                .configJson(entity.getConfigJson())
+                .userId(entity.getUserId())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();

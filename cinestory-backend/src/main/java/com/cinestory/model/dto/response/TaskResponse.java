@@ -22,12 +22,9 @@ public class TaskResponse {
     private String projectName;
     private String status;
     private String currentStep;
-    private Integer totalSlices;
-    private Integer processedSlices;
-    private Integer succeededSlices;
-    private Integer failedSlices;
     private Integer progress;
-    private String errorMessage;
+    private String outputVideoUrl;
+    private Integer totalDuration;
     private LocalDateTime createdAt;
     private LocalDateTime startedAt;
     private LocalDateTime completedAt;
@@ -42,12 +39,9 @@ public class TaskResponse {
                 .projectName(project.getName())
                 .status(project.getStatus() != null ? project.getStatus().name() : null)
                 .currentStep(project.getCurrentStep())
-                .totalSlices(project.getTotalSlices())
-                .processedSlices(project.getProcessedSlices())
-                .succeededSlices(project.getSucceededSlices())
-                .failedSlices(project.getFailedSlices())
                 .progress(project.getProgress())
-                .errorMessage(project.getErrorMessage())
+                .outputVideoUrl(project.getOutputVideoUrl())
+                .totalDuration(project.getTotalDuration())
                 .createdAt(project.getCreatedAt())
                 .startedAt(project.getStartedAt())
                 .completedAt(project.getCompletedAt())

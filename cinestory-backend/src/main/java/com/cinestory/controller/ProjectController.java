@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
  */
 @Tag(name = "项目管理", description = "项目的创建、查询、更新、删除等操作")
 @RestController
-@RequestMapping("/api/projects")
+@RequestMapping("/projects")
 @RequiredArgsConstructor
 public class ProjectController {
 

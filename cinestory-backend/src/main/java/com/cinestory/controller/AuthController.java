@@ -2,7 +2,7 @@ package com.cinestory.controller;
 
 import com.cinestory.config.jwt.JwtAuthenticationResponse;
 import com.cinestory.config.jwt.UserPrincipal;
-import com.cinestory.model.dto.ApiResponse;
+import com.cinestory.model.dto.response.ApiResponse;
 import com.cinestory.model.dto.auth.*;
 import com.cinestory.model.entity.User;
 import com.cinestory.service.auth.AuthService;
@@ -23,7 +23,7 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 @RequiredArgsConstructor
 @Tag(name = "认证", description = "用户认证相关接口")
 public class AuthController {
@@ -118,7 +118,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Void>> logout() {
         // JWT 是无状态的，客户端删除 token 即可
         // 可选：实现 token 黑名单机制
-        return ResponseEntity.ok(ApiResponse.success(null, "退出成功"));
+        return ResponseEntity.ok(ApiResponse.success("退出成功",null));
     }
 
     /**
@@ -128,7 +128,7 @@ public class AuthController {
     @Operation(summary = "修改密码", description = "修改当前用户密码")
     public ResponseEntity<ApiResponse<Void>> updatePassword(@Valid @RequestBody UpdatePasswordRequest request) {
         authService.updatePassword(request);
-        return ResponseEntity.ok(ApiResponse.success(null, "密码修改成功"));
+        return ResponseEntity.ok(ApiResponse.success("密码修改成功",null));
     }
 
     /**
@@ -159,7 +159,7 @@ public class AuthController {
         String newApiKey = authService.regenerateApiKey();
         Map<String, String> result = new HashMap<>();
         result.put("apiKey", newApiKey);
-        return ResponseEntity.ok(ApiResponse.success(result, "API Key 已重新生成"));
+        return ResponseEntity.ok(ApiResponse.success("API Key 已重新生成",result));
     }
 
     /**

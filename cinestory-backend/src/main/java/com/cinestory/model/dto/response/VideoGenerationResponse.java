@@ -18,15 +18,17 @@ import java.time.LocalDateTime;
 public class VideoGenerationResponse {
 
     private Long id;
-    private Long projectId;
-    private Long textSliceId;
+    private Long sliceId;
+    private Long promptId;
     private String provider;
+    private String providerModel;
+    private String providerTaskId;
     private String status;
-    private String prompt;
     private String videoUrl;
     private Integer duration;
     private Integer width;
     private Integer height;
+    private Long fileSize;
     private String errorMessage;
     private Integer retryCount;
     private LocalDateTime createdAt;
@@ -38,15 +40,17 @@ public class VideoGenerationResponse {
     public static VideoGenerationResponse fromEntity(VideoGeneration entity) {
         return VideoGenerationResponse.builder()
                 .id(entity.getId())
-                .projectId(entity.getProjectId())
-                .textSliceId(entity.getTextSliceId())
+                .sliceId(entity.getSliceId())
+                .promptId(entity.getPromptId())
                 .provider(entity.getProvider())
+                .providerModel(entity.getProviderModel())
+                .providerTaskId(entity.getProviderTaskId())
                 .status(entity.getStatus() != null ? entity.getStatus().name() : null)
-                .prompt(entity.getPrompt())
                 .videoUrl(entity.getVideoUrl())
                 .duration(entity.getDuration())
                 .width(entity.getWidth())
                 .height(entity.getHeight())
+                .fileSize(entity.getFileSize())
                 .errorMessage(entity.getErrorMessage())
                 .retryCount(entity.getRetryCount())
                 .createdAt(entity.getCreatedAt())

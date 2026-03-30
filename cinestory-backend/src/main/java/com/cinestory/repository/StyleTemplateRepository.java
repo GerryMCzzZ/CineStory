@@ -21,19 +21,9 @@ public interface StyleTemplateRepository extends JpaRepository<StyleTemplate, Lo
     List<StyleTemplate> findByIsSystemTrueOrderByCreatedAtAsc();
 
     /**
-     * 查询系统预设模板（按分类和名称排序）
-     */
-    List<StyleTemplate> findByIsSystemTrueOrderByCategoryAscNameAsc();
-
-    /**
      * 查询自定义模板
      */
     List<StyleTemplate> findByIsSystemFalseOrderByCreatedAtDesc();
-
-    /**
-     * 根据分类查询模板
-     */
-    Page<StyleTemplate> findByCategory(String category, Pageable pageable);
 
     /**
      * 查询所有公开模板（系统预设+用户公开）
@@ -50,10 +40,4 @@ public interface StyleTemplateRepository extends JpaRepository<StyleTemplate, Lo
      */
     @Query("SELECT t FROM StyleTemplate t WHERE t.isSystem = true OR t.userId = :userId")
     List<StyleTemplate> findAvailableForUser(Long userId);
-
-    /**
-     * 查询所有分类
-     */
-    @Query("SELECT DISTINCT s.category FROM StyleTemplate s WHERE s.category IS NOT NULL ORDER BY s.category")
-    List<String> findAllCategories();
 }

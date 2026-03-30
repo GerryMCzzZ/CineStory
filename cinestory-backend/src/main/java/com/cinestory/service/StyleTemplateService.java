@@ -17,11 +17,6 @@ public interface StyleTemplateService {
     Page<StyleTemplate> getAllStyles(Pageable pageable);
 
     /**
-     * 根据分类获取风格模板
-     */
-    Page<StyleTemplate> getByCategory(String category, Pageable pageable);
-
-    /**
      * 获取系统预设风格
      */
     List<StyleTemplate> getSystemStyles();
@@ -35,11 +30,6 @@ public interface StyleTemplateService {
      * 根据 ID 获取风格模板
      */
     StyleTemplate getById(Long id);
-
-    /**
-     * 获取所有分类
-     */
-    List<String> getCategories();
 
     /**
      * 创建风格模板

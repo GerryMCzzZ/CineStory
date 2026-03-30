@@ -174,7 +174,7 @@ public class RetryStrategyService {
         // 重置生成状态
         generation.setStatus(VideoGeneration.GenerationStatus.PENDING);
         generation.setProvider(null);
-        generation.setTaskId(null);
+        generation.setProviderTaskId(null);
         generation.setErrorMessage(null);
         videoGenerationRepository.save(generation);
 

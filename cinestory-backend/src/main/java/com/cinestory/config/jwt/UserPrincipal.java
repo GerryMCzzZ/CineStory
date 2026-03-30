@@ -7,11 +7,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * 用户认证信息（实现 UserDetails）
@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserPrincipal {
+public class UserPrincipal implements UserDetails {
 
     private Long id;
     private String username;
@@ -35,7 +35,8 @@ public class UserPrincipal {
     private String apiKey;
     private Boolean apiKeyEnabled;
 
-    private Collection<? extends GrantedAuthority> authorities;
+    @Builder.Default
+    private Collection<? extends GrantedAuthority> authorities = new HashSet<>();
 
     /**
      * 从 User 实体创建 UserPrincipal
@@ -80,5 +81,42 @@ public class UserPrincipal {
      */
     public boolean isVip() {
         return User.Role.VIP.equals(role) || User.Role.ADMIN.equals(role);
+    }
+
+    // ========== UserDetails 实现 ==========
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return authorities;
+    }
+
+    @Override
+    public String getPassword() {
+        return password;
+    }
+
+    @Override
+    public String getUsername() {
+        return username;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return status != User.UserStatus.LOCKED;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return status == User.UserStatus.ACTIVE;
     }
 }

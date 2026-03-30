@@ -42,8 +42,8 @@ public class SecurityConfig {
 
     private static final String[] WHITE_LIST = {
             // 公开 API 端点
-            "/api/auth/**",
-            "/api/public/**",
+            "/auth/**",
+            "/public/**",
             // Swagger UI
             "/swagger-ui/**",
             "/v3/api-docs/**",
@@ -54,7 +54,7 @@ public class SecurityConfig {
             "/assets/**",
             "/favicon.ico",
             // 健康检查
-            "/api/actuator/health",
+            "/actuator/health",
             // WebSocket
             "/ws/**"
     };
@@ -67,9 +67,9 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(WHITE_LIST).permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/styles/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/projects/**").permitAll()
-                        .requestMatchers("/api/video-generations/stats").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/styles/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/projects/**").permitAll()
+                        .requestMatchers("/video-generations/stats").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
