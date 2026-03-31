@@ -5,15 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
 
 /**
  * 用户实体
@@ -24,7 +17,7 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class User implements UserDetails {
+public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -59,7 +52,7 @@ public class User implements UserDetails {
     // 配额管理
     @Column(name = "quota_total")
     @Builder.Default
-    private Integer quotaTotal = 100; // 默认每月100个视频
+    private Integer quotaTotal = 100;
 
     @Column(name = "quota_used")
     @Builder.Default
@@ -93,22 +86,11 @@ public class User implements UserDetails {
         if (quotaResetDate == null) {
             quotaResetDate = LocalDateTime.now().plusMonths(1);
         }
-        // 生成 API Key
-        if (apiKey == null) {
-            apiKey = generateApiKey();
-        }
     }
 
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
-    }
-
-    /**
-     * 生成 API Key
-     */
-    private String generateApiKey() {
-        return "cs_" + UUID.randomUUID().toString().replace("-", "");
     }
 
     /**
@@ -134,47 +116,8 @@ public class User implements UserDetails {
         this.quotaResetDate = LocalDateTime.now().plusMonths(1);
     }
 
-    // ========== UserDetails 实现 ==========
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        Set<GrantedAuthority> authorities = new HashSet<>();
-        authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
-        return authorities;
-    }
-
-    @Override
-    public String getPassword() {
-        return password;
-    }
-
-    @Override
-    public String getUsername() {
-        return username;
-    }
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return status != UserStatus.LOCKED;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return status == UserStatus.ACTIVE;
-    }
-
     /**
-     * 用户角色
+     * 用户角色常量
      */
     public static class Role {
         public static final String USER = "USER";
@@ -186,9 +129,9 @@ public class User implements UserDetails {
      * 用户状态
      */
     public enum UserStatus {
-        ACTIVE,      // 活跃
-        INACTIVE,    // 未激活
-        LOCKED,      // 锁定
-        BANNED       // 封禁
+        ACTIVE,
+        INACTIVE,
+        LOCKED,
+        BANNED
     }
 }

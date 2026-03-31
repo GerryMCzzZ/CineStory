@@ -49,7 +49,6 @@ public class ProjectServiceImpl implements ProjectService {
                 .status(Project.ProjectStatus.DRAFT)
                 .progress(0)
                 .totalCharacters(0)
-                .progress(0)
                 .build();
 
         Project saved = projectRepository.save(project);

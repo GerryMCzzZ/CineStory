@@ -6,6 +6,7 @@ import com.cinestory.config.jwt.UserPrincipal;
 import com.cinestory.model.dto.auth.LoginRequest;
 import com.cinestory.model.dto.auth.RegisterRequest;
 import com.cinestory.model.dto.auth.UpdatePasswordRequest;
+import com.cinestory.model.dto.auth.UpdateProfileRequest;
 import com.cinestory.model.entity.User;
 import com.cinestory.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -184,20 +185,20 @@ public class AuthService {
      * 更新用户信息
      */
     @Transactional
-    public User updateProfile(Map<String, Object> updates) {
+    public User updateProfile(UpdateProfileRequest request) {
         User user = getCurrentUser();
         if (user == null) {
             throw new IllegalStateException("未登录");
         }
 
-        if (updates.containsKey("nickname")) {
-            user.setNickname((String) updates.get("nickname"));
+        if (request.getNickname() != null) {
+            user.setNickname(request.getNickname());
         }
-        if (updates.containsKey("bio")) {
-            user.setBio((String) updates.get("bio"));
+        if (request.getBio() != null) {
+            user.setBio(request.getBio());
         }
-        if (updates.containsKey("avatarUrl")) {
-            user.setAvatarUrl((String) updates.get("avatarUrl"));
+        if (request.getAvatarUrl() != null) {
+            user.setAvatarUrl(request.getAvatarUrl());
         }
 
         user = userRepository.save(user);

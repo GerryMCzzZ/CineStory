@@ -4,7 +4,7 @@
 -- ============================================
 -- 用户表
 -- ============================================
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE users (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
     email VARCHAR(100) NOT NULL UNIQUE,
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS users (
 -- ============================================
 -- 风格模板表
 -- ============================================
-CREATE TABLE IF NOT EXISTS style_templates (
+CREATE TABLE style_templates (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '风格模板ID',
     name VARCHAR(100) NOT NULL COMMENT '风格名称',
     name_en VARCHAR(100) COMMENT '英文名称',
@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS style_templates (
 -- ============================================
 -- API密钥配置表
 -- ============================================
-CREATE TABLE IF NOT EXISTS api_credentials (
+CREATE TABLE api_credentials (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '配置ID',
     user_id BIGINT NOT NULL COMMENT '用户ID',
     provider VARCHAR(50) NOT NULL COMMENT 'API提供商: runway, pika, luma, openai等',
@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS api_credentials (
 -- ============================================
 -- 项目表
 -- ============================================
-CREATE TABLE IF NOT EXISTS projects (
+CREATE TABLE projects (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '项目ID',
     user_id BIGINT NOT NULL COMMENT '用户ID',
     name VARCHAR(255) NOT NULL COMMENT '项目名称',
@@ -127,7 +127,7 @@ CREATE TABLE IF NOT EXISTS projects (
 -- ============================================
 -- 任务表
 -- ============================================
-CREATE TABLE IF NOT EXISTS tasks (
+CREATE TABLE tasks (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '任务ID',
     project_id BIGINT NOT NULL COMMENT '项目ID',
     type VARCHAR(50) NOT NULL COMMENT '任务类型: TEXT_SPLITTING, PROMPT_GENERATION, VIDEO_GENERATION, VIDEO_COMPOSITION',
@@ -156,7 +156,7 @@ CREATE TABLE IF NOT EXISTS tasks (
 -- ============================================
 -- 文本切片表
 -- ============================================
-CREATE TABLE IF NOT EXISTS text_slices (
+CREATE TABLE text_slices (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '切片ID',
     project_id BIGINT NOT NULL COMMENT '项目ID',
     content TEXT NOT NULL COMMENT '切片内容',
@@ -188,7 +188,7 @@ CREATE TABLE IF NOT EXISTS text_slices (
 -- ============================================
 -- 提示词表
 -- ============================================
-CREATE TABLE IF NOT EXISTS video_prompts (
+CREATE TABLE video_prompts (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '提示词ID',
     slice_id BIGINT NOT NULL COMMENT '切片ID',
 
@@ -222,7 +222,7 @@ CREATE TABLE IF NOT EXISTS video_prompts (
 -- ============================================
 -- 视频生成记录表
 -- ============================================
-CREATE TABLE IF NOT EXISTS video_generations (
+CREATE TABLE video_generations (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '生成记录ID',
     slice_id BIGINT NOT NULL COMMENT '切片ID',
     prompt_id BIGINT COMMENT '提示词ID',
@@ -264,7 +264,7 @@ CREATE TABLE IF NOT EXISTS video_generations (
 -- ============================================
 -- 视频片段表 (用于拼接)
 -- ============================================
-CREATE TABLE IF NOT EXISTS video_segments (
+CREATE TABLE video_segments (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '片段ID',
     project_id BIGINT NOT NULL COMMENT '项目ID',
     video_generation_id BIGINT COMMENT '视频生成记录ID',
@@ -341,4 +341,4 @@ INSERT INTO style_templates (name, name_en, description, is_system, is_public, v
 -- 密码 admin123 的 BCrypt 加密结果
 INSERT INTO users (username, email, password, nickname, role, quota_total) VALUES
 ('admin', 'admin@cinestory.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '管理员', 'ADMIN', 10000)
-ON DUPLICATE KEY UPDATE id = id;
+ON DUPLICATE KEY UPDATE username = username;

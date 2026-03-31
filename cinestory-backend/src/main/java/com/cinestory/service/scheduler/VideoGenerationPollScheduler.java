@@ -10,8 +10,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 视频生成状态轮询定时任务
@@ -107,7 +111,39 @@ public class VideoGenerationPollScheduler {
     @Scheduled(cron = "0 0 2 * * ?")
     public void cleanupTempFiles() {
         log.info("Starting temp files cleanup...");
-        // TODO: 实现临时文件清理逻辑
-        log.info("Temp files cleanup completed");
+        try {
+            Path tempDir = Paths.get(System.getProperty("java.io.tmpdir"), "cinestory");
+            if (!Files.exists(tempDir)) {
+                log.debug("Temp directory does not exist: {}", tempDir);
+                return;
+            }
+
+            long cutoffTime = System.currentTimeMillis() - (24 * 60 * 60 * 1000); // 24小时前
+            AtomicInteger deletedCount = new AtomicInteger(0);
+
+            Files.walk(tempDir)
+                    .filter(Files::isRegularFile)
+                    .filter(path -> {
+                        try {
+                            return Files.getLastModifiedTime(path).toMillis() < cutoffTime;
+                        } catch (IOException e) {
+                            log.warn("Failed to get last modified time for: {}", path, e);
+                            return false;
+                        }
+                    })
+                    .forEach(path -> {
+                        try {
+                            Files.deleteIfExists(path);
+                            deletedCount.incrementAndGet();
+                            log.debug("Deleted temp file: {}", path);
+                        } catch (IOException e) {
+                            log.warn("Failed to delete temp file: {}", path, e);
+                        }
+                    });
+
+            log.info("Temp files cleanup completed. Deleted {} files.", deletedCount.get());
+        } catch (Exception e) {
+            log.error("Error during temp files cleanup", e);
+        }
     }
 }

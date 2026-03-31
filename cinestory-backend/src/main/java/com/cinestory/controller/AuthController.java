@@ -3,7 +3,12 @@ package com.cinestory.controller;
 import com.cinestory.config.jwt.JwtAuthenticationResponse;
 import com.cinestory.config.jwt.UserPrincipal;
 import com.cinestory.model.dto.response.ApiResponse;
-import com.cinestory.model.dto.auth.*;
+import com.cinestory.model.dto.response.UserResponse;
+import com.cinestory.model.dto.auth.LoginRequest;
+import com.cinestory.model.dto.auth.RegisterRequest;
+import com.cinestory.model.dto.auth.UpdatePasswordRequest;
+import com.cinestory.model.dto.auth.UpdateProfileRequest;
+import com.cinestory.model.dto.auth.RefreshTokenRequest;
 import com.cinestory.model.entity.User;
 import com.cinestory.service.auth.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,16 +42,7 @@ public class AuthController {
     @Operation(summary = "用户注册", description = "创建新用户账号")
     public ResponseEntity<ApiResponse<UserResponse>> register(@Valid @RequestBody RegisterRequest request) {
         User user = authService.register(request);
-        UserResponse response = UserResponse.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .nickname(user.getNickname())
-                .role(user.getRole())
-                .quotaTotal(user.getQuotaTotal())
-                .quotaUsed(user.getQuotaUsed())
-                .build();
-        return ResponseEntity.ok(ApiResponse.success(response));
+        return ResponseEntity.ok(ApiResponse.success(UserResponse.fromUser(user)));
     }
 
     /**
@@ -76,6 +72,9 @@ public class AuthController {
     @Operation(summary = "验证 Token", description = "验证 Token 是否有效")
     public ResponseEntity<ApiResponse<Map<String, Object>>> validateToken(@RequestHeader("Authorization") String authHeader) {
         String token = authHeader.replace("Bearer ", "");
+        if (token.equals("Bearer ")) {
+            return ResponseEntity.ok(ApiResponse.error(401, "Missing token"));
+        }
         Map<String, Object> result = authService.validateToken(token);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
@@ -88,26 +87,9 @@ public class AuthController {
     public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser(@AuthenticationPrincipal UserPrincipal userPrincipal) {
         User user = authService.getCurrentUser();
         if (user == null) {
-            return ResponseEntity.ok(ApiResponse.error("未登录"));
+            return ResponseEntity.ok(ApiResponse.error(401, "未登录"));
         }
-
-        UserResponse response = UserResponse.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .nickname(user.getNickname())
-                .avatarUrl(user.getAvatarUrl())
-                .bio(user.getBio())
-                .role(user.getRole())
-                .status(user.getStatus().name())
-                .quotaTotal(user.getQuotaTotal())
-                .quotaUsed(user.getQuotaUsed())
-                .quotaResetDate(user.getQuotaResetDate())
-                .apiKeyEnabled(user.getApiKeyEnabled())
-                .createdAt(user.getCreatedAt())
-                .build();
-
-        return ResponseEntity.ok(ApiResponse.success(response));
+        return ResponseEntity.ok(ApiResponse.success(UserResponse.fromUserDetail(user)));
     }
 
     /**
@@ -116,9 +98,7 @@ public class AuthController {
     @PostMapping("/logout")
     @Operation(summary = "用户退出", description = "用户退出登录")
     public ResponseEntity<ApiResponse<Void>> logout() {
-        // JWT 是无状态的，客户端删除 token 即可
-        // 可选：实现 token 黑名单机制
-        return ResponseEntity.ok(ApiResponse.success("退出成功",null));
+        return ResponseEntity.ok(ApiResponse.success("退出成功", null));
     }
 
     /**
@@ -128,7 +108,7 @@ public class AuthController {
     @Operation(summary = "修改密码", description = "修改当前用户密码")
     public ResponseEntity<ApiResponse<Void>> updatePassword(@Valid @RequestBody UpdatePasswordRequest request) {
         authService.updatePassword(request);
-        return ResponseEntity.ok(ApiResponse.success("密码修改成功",null));
+        return ResponseEntity.ok(ApiResponse.success("密码修改成功", null));
     }
 
     /**
@@ -136,18 +116,9 @@ public class AuthController {
      */
     @PatchMapping("/profile")
     @Operation(summary = "更新用户信息", description = "更新昵称、头像等用户信息")
-    public ResponseEntity<ApiResponse<UserResponse>> updateProfile(@RequestBody Map<String, Object> updates) {
-        User user = authService.updateProfile(updates);
-        UserResponse response = UserResponse.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .nickname(user.getNickname())
-                .avatarUrl(user.getAvatarUrl())
-                .bio(user.getBio())
-                .role(user.getRole())
-                .build();
-        return ResponseEntity.ok(ApiResponse.success(response));
+    public ResponseEntity<ApiResponse<UserResponse>> updateProfile(@Valid @RequestBody UpdateProfileRequest request) {
+        User user = authService.updateProfile(request);
+        return ResponseEntity.ok(ApiResponse.success(UserResponse.fromUser(user)));
     }
 
     /**
@@ -159,7 +130,7 @@ public class AuthController {
         String newApiKey = authService.regenerateApiKey();
         Map<String, String> result = new HashMap<>();
         result.put("apiKey", newApiKey);
-        return ResponseEntity.ok(ApiResponse.success("API Key 已重新生成",result));
+        return ResponseEntity.ok(ApiResponse.success("API Key 已重新生成", result));
     }
 
     /**
@@ -172,28 +143,5 @@ public class AuthController {
         Map<String, Boolean> result = new HashMap<>();
         result.put("enabled", enabled);
         return ResponseEntity.ok(ApiResponse.success(result));
-    }
-
-    /**
-     * 用户响应 DTO
-     */
-    @lombok.Data
-    @lombok.Builder
-    @lombok.NoArgsConstructor
-    @lombok.AllArgsConstructor
-    public static class UserResponse {
-        private Long id;
-        private String username;
-        private String email;
-        private String nickname;
-        private String avatarUrl;
-        private String bio;
-        private String role;
-        private String status;
-        private Integer quotaTotal;
-        private Integer quotaUsed;
-        private java.time.LocalDateTime quotaResetDate;
-        private Boolean apiKeyEnabled;
-        private java.time.LocalDateTime createdAt;
     }
 }

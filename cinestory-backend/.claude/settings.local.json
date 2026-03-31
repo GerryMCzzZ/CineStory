@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find D:ProjectCineStorycinestory-backendsrcmainresourcesdbmigration -type f -name *.sql)",
+      "Bash(mvn compile:*)",
+      "Read(//c/Users/AI/.m2/wrapper/**)",
+      "Bash(ls mvnw*)"
+    ]
+  }
+}

@@ -1,6 +1,7 @@
 package com.cinestory.controller;
 
 import com.cinestory.model.dto.response.ApiResponse;
+import com.cinestory.model.dto.response.GenerationStatsResponse;
 import com.cinestory.model.dto.response.PageResponse;
 import com.cinestory.model.dto.response.VideoGenerationResponse;
 import com.cinestory.model.entity.VideoGeneration;
@@ -16,8 +17,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * 视频生成历史控制器
@@ -105,31 +104,8 @@ public class VideoGenerationController {
      */
     @GetMapping("/stats")
     @Operation(summary = "获取生成统计", description = "获取视频生成的统计数据")
-    public ResponseEntity<ApiResponse<GenerationStats>> getStats() {
-        GenerationStats stats = videoGenerationService.getStats();
+    public ResponseEntity<ApiResponse<GenerationStatsResponse>> getStats() {
+        GenerationStatsResponse stats = videoGenerationService.getStats();
         return ResponseEntity.ok(ApiResponse.success(stats));
-    }
-
-    /**
-     * 生成统计数据
-     */
-    @lombok.Data
-    @lombok.Builder
-    @lombok.NoArgsConstructor
-    @lombok.AllArgsConstructor
-    public static class GenerationStats {
-        private long total;
-        private long pending;
-        private long processing;
-        private long completed;
-        private long failed;
-        private long cancelled;
-
-        private long runwayTotal;
-        private long runwayCompleted;
-        private long pikaTotal;
-        private long pikaCompleted;
-        private long lumaTotal;
-        private long lumaCompleted;
     }
 }

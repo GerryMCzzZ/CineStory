@@ -1,6 +1,6 @@
 package com.cinestory.service.video;
 
-import com.cinestory.controller.VideoGenerationController.GenerationStats;
+import com.cinestory.model.dto.response.GenerationStatsResponse;
 import com.cinestory.model.dto.response.VideoGenerationResponse;
 import com.cinestory.model.entity.VideoGeneration;
 import com.cinestory.repository.VideoGenerationRepository;
@@ -11,8 +11,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Optional;
 
 /**
  * 视频生成服务
@@ -138,8 +136,8 @@ public class VideoGenerationService {
     /**
      * 获取生成统计
      */
-    public GenerationStats getStats() {
-        return GenerationStats.builder()
+    public GenerationStatsResponse getStats() {
+        return GenerationStatsResponse.builder()
                 .total(videoGenerationRepository.count())
                 .pending(videoGenerationRepository.countByStatus(VideoGeneration.GenerationStatus.PENDING))
                 .processing(videoGenerationRepository.countByStatus(VideoGeneration.GenerationStatus.PROCESSING))
