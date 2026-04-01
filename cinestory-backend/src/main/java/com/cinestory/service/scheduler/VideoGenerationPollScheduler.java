@@ -1,15 +1,17 @@
 package com.cinestory.service.scheduler;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.cinestory.mapper.TextSliceMapper;
+import com.cinestory.mapper.VideoGenerationMapper;
 import com.cinestory.model.entity.VideoGeneration;
 import com.cinestory.model.entity.VideoGeneration.GenerationStatus;
-import com.cinestory.repository.TextSliceRepository;
-import com.cinestory.repository.VideoGenerationRepository;
 import com.cinestory.service.video.VideoGenerationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -26,8 +28,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RequiredArgsConstructor
 public class VideoGenerationPollScheduler {
 
-    private final VideoGenerationRepository videoGenerationRepository;
-    private final TextSliceRepository textSliceRepository;
+    private final VideoGenerationMapper videoGenerationMapper;
+    private final TextSliceMapper textSliceMapper;
     private final VideoGenerationService videoGenerationService;
 
     /**
@@ -38,11 +40,9 @@ public class VideoGenerationPollScheduler {
     public void pollPendingGenerations() {
         log.debug("Polling pending video generations...");
 
-        List<VideoGeneration> pendingGenerations = videoGenerationRepository
-                .findByStatusIn(List.of(
-                        GenerationStatus.PENDING,
-                        GenerationStatus.PROCESSING
-                ));
+        List<VideoGeneration> pendingGenerations = videoGenerationMapper
+                .selectList(new LambdaQueryWrapper<VideoGeneration>()
+                        .in(VideoGeneration::getStatus, GenerationStatus.PENDING, GenerationStatus.PROCESSING));
 
         if (pendingGenerations.isEmpty()) {
             log.debug("No pending video generations found");
@@ -96,7 +96,7 @@ public class VideoGenerationPollScheduler {
 
         generation.setStatus(GenerationStatus.FAILED);
         generation.setErrorMessage("Generation timeout");
-        videoGenerationRepository.save(generation);
+        videoGenerationMapper.updateById(generation);
 
         // 检查是否需要重试
         if (generation.getRetryCount() < 3) {

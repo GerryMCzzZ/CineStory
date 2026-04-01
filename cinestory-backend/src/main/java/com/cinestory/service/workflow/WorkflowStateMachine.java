@@ -1,7 +1,7 @@
 package com.cinestory.service.workflow;
 
+import com.cinestory.mapper.ProjectMapper;
 import com.cinestory.model.entity.Project;
-import com.cinestory.repository.ProjectRepository;
 import com.cinestory.service.video.VideoCompositionService;
 import com.cinestory.service.video.VideoGenerationService;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class WorkflowStateMachine {
 
-    private final ProjectRepository projectRepository;
+    private final ProjectMapper projectMapper;
     private final VideoGenerationService videoGenerationService;
     private final VideoCompositionService videoCompositionService;
 
@@ -91,7 +91,7 @@ public class WorkflowStateMachine {
         project.setCurrentStep(WorkflowStep.INIT.getDescription());
         project.setProgress(WorkflowStep.INIT.getProgressPercent());
 
-        projectRepository.save(project);
+        projectMapper.updateById(project);
         log.info("Started workflow for project: {}", projectId);
     }
 
@@ -103,7 +103,7 @@ public class WorkflowStateMachine {
         Project project = getProject(projectId);
         project.setCurrentStep(step.getDescription() + (detail != null ? ": " + detail : ""));
         project.setProgress(step.getProgressPercent());
-        projectRepository.save(project);
+        projectMapper.updateById(project);
         log.debug("Updated step for project {}: {}", projectId, step.getDescription());
     }
 
@@ -117,7 +117,7 @@ public class WorkflowStateMachine {
         if (detail != null) {
             project.setCurrentStep(detail);
         }
-        projectRepository.save(project);
+        projectMapper.updateById(project);
         log.debug("Updated progress for project {}: {}%", projectId, progress);
     }
 
@@ -136,7 +136,7 @@ public class WorkflowStateMachine {
         project.setProgress(100);
         project.setOutputVideoUrl(outputVideoUrl);
 
-        projectRepository.save(project);
+        projectMapper.updateById(project);
         log.info("Completed workflow for project: {}", projectId);
     }
 
@@ -153,7 +153,7 @@ public class WorkflowStateMachine {
         project.setCompletedAt(LocalDateTime.now());
         project.setCurrentStep("失败");
 
-        projectRepository.save(project);
+        projectMapper.updateById(project);
         log.error("Failed workflow for project {}: {}", projectId, errorMessage);
     }
 
@@ -170,7 +170,7 @@ public class WorkflowStateMachine {
         project.setCompletedAt(LocalDateTime.now());
         project.setCurrentStep("已取消");
 
-        projectRepository.save(project);
+        projectMapper.updateById(project);
         log.info("Cancelled workflow for project: {}", projectId);
     }
 
@@ -192,7 +192,7 @@ public class WorkflowStateMachine {
         project.setProgress(WorkflowStep.INIT.getProgressPercent());
         project.setCompletedAt(null);
 
-        projectRepository.save(project);
+        projectMapper.updateById(project);
         log.info("Retrying workflow for project: {}", projectId);
     }
 
@@ -248,8 +248,11 @@ public class WorkflowStateMachine {
     }
 
     private Project getProject(Long projectId) {
-        return projectRepository.findById(projectId)
-                .orElseThrow(() -> new IllegalArgumentException("Project not found: " + projectId));
+        Project project = projectMapper.selectById(projectId);
+        if (project == null) {
+            throw new IllegalArgumentException("Project not found: " + projectId);
+        }
+        return project;
     }
 
     /**

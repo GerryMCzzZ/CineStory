@@ -18,6 +18,7 @@
 
 ### 技术亮点
 - Java 17 + Spring Boot 3.x 后端
+- MyBatis-Plus 数据持久层（遵循阿里巴巴 Java 编码规范）
 - Vue 3 + Vite + Pinia 前端
 - Spring Security + JWT 认证
 - Docker 容器化部署
@@ -185,11 +186,12 @@ cinestory/
 │   │       │   ├── file/        # 文件解析
 │   │       │   └── websocket/   # WebSocket 服务
 │   │       ├── model/           # 数据模型 (Entity, DTO)
-│   │       ├── repository/      # 数据访问
+│   │       ├── mapper/          # MyBatis-Plus Mapper 接口
 │   │       └── config/          # Spring 配置
 │   └── src/main/resources/
 │       ├── application.yml      # 应用配置
-│       └── db/migration/        # 数据库迁移
+│       ├── mapper/              # MyBatis XML 映射文件
+│       └── db/migration/        # Flyway 数据库迁移
 ├── cinestory-frontend/          # Vue 3 前端
 │   ├── src/
 │   │   ├── api/                # API 客户端
@@ -305,6 +307,7 @@ LLM_MODEL=ernie-4.0-8k
 - [x] 基础项目结构
 - [x] 数据库设计（Flyway 迁移）
 - [x] 用户认证系统 (JWT)
+- [x] MyBatis-Plus 持久层（从 JPA 迁移，遵循阿里编码规范）
 - [x] 文本切片模块
 - [x] 风格模板管理
 - [x] 文件上传与解析

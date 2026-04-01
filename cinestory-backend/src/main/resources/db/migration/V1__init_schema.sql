@@ -338,7 +338,6 @@ INSERT INTO style_templates (name, name_en, description, is_system, is_public, v
 -- 创建默认管理员用户 (测试用，生产环境应删除)
 -- ============================================
 -- 插入默认管理员用户（密码: admin123，需要 BCrypt 加密）
--- 密码 admin123 的 BCrypt 加密结果
 INSERT INTO users (username, email, password, nickname, role, quota_total) VALUES
-('admin', 'admin@cinestory.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '管理员', 'ADMIN', 10000)
+('admin', 'admin@cinestory.com', '$2a$10$jn62Tw6DDlvKZCChZW7Wou.GHZj0eMGRppH2wDa/AQUAj6wzNF20W', '管理员', 'ADMIN', 10000)
 ON DUPLICATE KEY UPDATE username = username;

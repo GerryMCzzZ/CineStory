@@ -1,8 +1,7 @@
 package com.cinestory.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.cinestory.model.entity.StyleTemplate;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -14,7 +13,7 @@ public interface StyleTemplateService {
     /**
      * 获取所有风格模板（分页）
      */
-    Page<StyleTemplate> getAllStyles(Pageable pageable);
+    IPage<StyleTemplate> getAllStyles(IPage<StyleTemplate> page);
 
     /**
      * 获取系统预设风格

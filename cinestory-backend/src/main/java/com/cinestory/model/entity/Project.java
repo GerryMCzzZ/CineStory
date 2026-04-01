@@ -1,6 +1,6 @@
 package com.cinestory.model.entity;
 
-import jakarta.persistence.*;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,104 +10,81 @@ import java.time.LocalDateTime;
 
 /**
  * 项目实体
- * 表示一个小说转视频的项目
+ *
+ * @author CineStory
  */
-@Entity
-@Table(name = "projects")
+@TableName("projects")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Project {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(type = IdType.AUTO)
     private Long id;
 
-    @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "style_template_id")
     private Long styleTemplateId;
 
-    // 小说文本信息
-    @Column(name = "novel_title")
+    /**
+     * 小说标题
+     */
     private String novelTitle;
 
-    @Column(name = "novel_author")
+    /**
+     * 小说作者
+     */
     private String novelAuthor;
 
-    @Column(name = "novel_content", columnDefinition = "TEXT")
+    /**
+     * 小说正文内容
+     */
     private String novelContent;
 
-    @Column(name = "total_characters")
     private Integer totalCharacters;
 
-    // 项目配置
-    @Column(name = "config_json", columnDefinition = "JSON")
+    /**
+     * 项目配置 JSON
+     */
     private String configJson;
 
-    // 状态管理
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 50)
     @Builder.Default
     private ProjectStatus status = ProjectStatus.DRAFT;
 
-    @Column(name = "current_step", length = 50)
     private String currentStep;
 
-    @Column(name = "progress")
     @Builder.Default
     private Integer progress = 0;
 
-    // 输出信息
-    @Column(name = "output_video_url")
     private String outputVideoUrl;
 
-    @Column(name = "output_video_path")
     private String outputVideoPath;
 
-    @Column(name = "total_duration")
     private Integer totalDuration;
 
-    // 时间戳
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updatedAt;
 
-    @Column(name = "started_at")
     private LocalDateTime startedAt;
 
-    @Column(name = "completed_at")
     private LocalDateTime completedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
 
     /**
      * 项目状态枚举
      */
     public enum ProjectStatus {
-        DRAFT,          // 草稿
-        PROCESSING,    // 处理中
-        COMPLETED,     // 已完成
-        FAILED,        // 失败
-        CANCELLED      // 已取消
+        DRAFT,
+        PROCESSING,
+        COMPLETED,
+        FAILED,
+        CANCELLED
     }
 }

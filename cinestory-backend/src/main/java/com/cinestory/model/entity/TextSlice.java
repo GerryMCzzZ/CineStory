@@ -1,6 +1,6 @@
 package com.cinestory.model.entity;
 
-import jakarta.persistence.*;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,80 +10,67 @@ import java.time.LocalDateTime;
 
 /**
  * 文本切片实体
- * 表示小说文本的一个切片片段
+ *
+ * @author CineStory
  */
-@Entity
-@Table(name = "text_slices")
+@TableName("text_slices")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class TextSlice {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(type = IdType.AUTO)
     private Long id;
 
-    @Column(name = "project_id", nullable = false)
     private Long projectId;
 
-    @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    @Column(name = "order_index", nullable = false)
     private Integer orderIndex;
 
-    // 切片元数据
-    @Enumerated(EnumType.STRING)
-    @Column(name = "scene_type", length = 50)
+    /**
+     * 场景类型
+     */
     private SceneType sceneType;
 
-    @Column(name = "characters", columnDefinition = "JSON")
-    private String characters;  // JSON数组字符串
+    /**
+     * 出场人物 JSON
+     */
+    private String characters;
 
-    @Column(name = "mood", length = 100)
     private String mood;
 
-    @Column(name = "location")
     private String location;
 
-    @Column(name = "time_of_day", length = 50)
     private String timeOfDay;
 
-    // 上下文引用
-    @Column(name = "context_before", columnDefinition = "JSON")
-    private String contextBefore;  // JSON数组字符串
+    /**
+     * 前文上下文 JSON
+     */
+    private String contextBefore;
 
-    @Column(name = "context_after", columnDefinition = "JSON")
-    private String contextAfter;   // JSON数组字符串
+    /**
+     * 后文上下文 JSON
+     */
+    private String contextAfter;
 
-    // 统计信息
-    @Column(name = "character_count")
     private Integer characterCount;
 
-    @Column(name = "estimated_duration")
     private Integer estimatedDuration;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        if (characterCount == null && content != null) {
-            characterCount = content.length();
-        }
-    }
 
     /**
      * 场景类型枚举
      */
     public enum SceneType {
-        DIALOGUE,       // 对话
-        DESCRIPTION,    // 描写
-        ACTION,         // 动作
-        TRANSITION,     // 转场
-        MONOLOGUE,      // 独白
-        NARRATION       // 旁白
+        DIALOGUE,
+        DESCRIPTION,
+        ACTION,
+        TRANSITION,
+        MONOLOGUE,
+        NARRATION
     }
 }

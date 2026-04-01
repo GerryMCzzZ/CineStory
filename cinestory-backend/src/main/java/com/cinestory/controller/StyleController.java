@@ -1,5 +1,7 @@
 package com.cinestory.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cinestory.model.dto.response.ApiResponse;
 import com.cinestory.model.dto.response.PageResponse;
 import com.cinestory.model.dto.response.StyleTemplateResponse;
@@ -9,9 +11,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +19,8 @@ import java.util.stream.Collectors;
 
 /**
  * 风格模板控制器
+ *
+ * @author CineStory
  */
 @Tag(name = "风格模板", description = "视频风格模板的查询操作")
 @RestController
@@ -36,18 +37,19 @@ public class StyleController {
             @Parameter(description = "每页大小") @RequestParam(defaultValue = "12") int size,
             @Parameter(description = "排序字段") @RequestParam(defaultValue = "name") String sortBy) {
 
-        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(sortBy).ascending());
-        Page<StyleTemplate> styles = styleTemplateService.getAllStyles(pageRequest);
+        // MyBatis-Plus 页码从 1 开始，前端从 0 开始
+        Page<StyleTemplate> mpPage = new Page<>(page + 1, size);
+        IPage<StyleTemplate> styles = styleTemplateService.getAllStyles(mpPage);
 
-        List<StyleTemplateResponse> responses = styles.getContent().stream()
+        List<StyleTemplateResponse> responses = styles.getRecords().stream()
                 .map(StyleTemplateResponse::fromEntity)
                 .collect(Collectors.toList());
 
         PageResponse<StyleTemplateResponse> pageResponse = PageResponse.of(
                 responses,
-                styles.getTotalElements(),
-                styles.getNumber(),
-                styles.getSize()
+                styles.getTotal(),
+                (int) styles.getCurrent() - 1,
+                (int) styles.getSize()
         );
 
         return ResponseEntity.ok(ApiResponse.success(pageResponse));

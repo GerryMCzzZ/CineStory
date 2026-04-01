@@ -1,5 +1,7 @@
 package com.cinestory.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cinestory.model.dto.request.CreateProjectRequest;
 import com.cinestory.model.dto.request.StartTaskRequest;
 import com.cinestory.model.dto.request.UpdateProjectRequest;
@@ -17,9 +19,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,6 +28,8 @@ import java.util.stream.Collectors;
 
 /**
  * 项目管理控制器
+ *
+ * @author CineStory
  */
 @Tag(name = "项目管理", description = "项目的创建、查询、更新、删除等操作")
 @RestController
@@ -39,7 +40,7 @@ public class ProjectController {
     private final ProjectService projectService;
 
     @Operation(summary = "创建项目", description = "创建一个新的视频生成项目")
-    @io.swagger.v3.oas.annotations.responses.ApiResponses(value = {
+    @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "201",
                     description = "创建成功",
@@ -65,18 +66,20 @@ public class ProjectController {
             @Parameter(description = "排序字段") @RequestParam(defaultValue = "createdAt") String sortBy,
             @Parameter(description = "排序方向 (asc/desc)") @RequestParam(defaultValue = "desc") String sortDir) {
 
-        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
-        Page<Project> projects = projectService.getProjects(PageRequest.of(page, size, sort));
+        // MyBatis-Plus 页码从 1 开始，前端从 0 开始，需转换
+        Page<Project> mpPage = new Page<>(page + 1, size);
+        IPage<Project> projects = projectService.getProjects(mpPage);
 
-        List<ProjectResponse> responses = projects.getContent().stream()
+        List<ProjectResponse> responses = projects.getRecords().stream()
                 .map(ProjectResponse::fromEntity)
                 .collect(Collectors.toList());
 
+        // 返回给前端的页码从 0 开始
         PageResponse<ProjectResponse> pageResponse = PageResponse.of(
                 responses,
-                projects.getTotalElements(),
-                projects.getNumber(),
-                projects.getSize()
+                projects.getTotal(),
+                (int) projects.getCurrent() - 1,
+                (int) projects.getSize()
         );
 
         return ResponseEntity.ok(ApiResponse.page(pageResponse));

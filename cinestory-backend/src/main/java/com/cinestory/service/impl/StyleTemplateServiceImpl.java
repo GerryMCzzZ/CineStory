@@ -1,13 +1,13 @@
 package com.cinestory.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.cinestory.exception.ResourceNotFoundException;
+import com.cinestory.mapper.StyleTemplateMapper;
 import com.cinestory.model.entity.StyleTemplate;
-import com.cinestory.repository.StyleTemplateRepository;
 import com.cinestory.service.StyleTemplateService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,34 +21,42 @@ import java.util.List;
 @RequiredArgsConstructor
 public class StyleTemplateServiceImpl implements StyleTemplateService {
 
-    private final StyleTemplateRepository styleTemplateRepository;
+    private final StyleTemplateMapper styleTemplateMapper;
 
     @Override
-    public Page<StyleTemplate> getAllStyles(Pageable pageable) {
-        return styleTemplateRepository.findAll(pageable);
+    public IPage<StyleTemplate> getAllStyles(IPage<StyleTemplate> page) {
+        return styleTemplateMapper.selectPage(page, null);
     }
 
     @Override
     public List<StyleTemplate> getSystemStyles() {
-        return styleTemplateRepository.findByIsSystemTrueOrderByCreatedAtAsc();
+        return styleTemplateMapper.selectList(new LambdaQueryWrapper<StyleTemplate>()
+                .eq(StyleTemplate::getIsSystem, true)
+                .orderByAsc(StyleTemplate::getCreatedAt));
     }
 
     @Override
     public List<StyleTemplate> getCustomStyles() {
-        return styleTemplateRepository.findByIsSystemFalseOrderByCreatedAtDesc();
+        return styleTemplateMapper.selectList(new LambdaQueryWrapper<StyleTemplate>()
+                .eq(StyleTemplate::getIsSystem, false)
+                .orderByDesc(StyleTemplate::getCreatedAt));
     }
 
     @Override
     public StyleTemplate getById(Long id) {
-        return styleTemplateRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Style template not found with id: " + id));
+        StyleTemplate styleTemplate = styleTemplateMapper.selectById(id);
+        if (styleTemplate == null) {
+            throw new ResourceNotFoundException("Style template not found with id: " + id);
+        }
+        return styleTemplate;
     }
 
     @Override
     @Transactional
     public StyleTemplate create(StyleTemplate styleTemplate) {
         styleTemplate.setIsSystem(false);
-        return styleTemplateRepository.save(styleTemplate);
+        styleTemplateMapper.insert(styleTemplate);
+        return styleTemplate;
     }
 
     @Override
@@ -62,7 +70,8 @@ public class StyleTemplateServiceImpl implements StyleTemplateService {
 
         styleTemplate.setId(id);
         styleTemplate.setIsSystem(false);
-        return styleTemplateRepository.save(styleTemplate);
+        styleTemplateMapper.updateById(styleTemplate);
+        return styleTemplate;
     }
 
     @Override
@@ -74,6 +83,6 @@ public class StyleTemplateServiceImpl implements StyleTemplateService {
             throw new IllegalStateException("Cannot delete system style template");
         }
 
-        styleTemplateRepository.deleteById(id);
+        styleTemplateMapper.deleteById(id);
     }
 }

@@ -1,19 +1,18 @@
 package com.cinestory.service.impl;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.cinestory.exception.ResourceNotFoundException;
+import com.cinestory.mapper.ProjectMapper;
 import com.cinestory.model.dto.request.CreateProjectRequest;
 import com.cinestory.model.dto.request.StartTaskRequest;
 import com.cinestory.model.dto.request.UpdateProjectRequest;
 import com.cinestory.model.entity.Project;
-import com.cinestory.repository.ProjectRepository;
 import com.cinestory.service.ProjectService;
 import com.cinestory.service.StyleTemplateService;
 import com.cinestory.service.text.TextSplitterService;
 import com.cinestory.service.websocket.ProgressWebSocketService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +27,7 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class ProjectServiceImpl implements ProjectService {
 
-    private final ProjectRepository projectRepository;
+    private final ProjectMapper projectMapper;
     private final StyleTemplateService styleTemplateService;
     private final TextSplitterService textSplitterService;
     private final ProgressWebSocketService progressWebSocketService;
@@ -51,20 +50,23 @@ public class ProjectServiceImpl implements ProjectService {
                 .totalCharacters(0)
                 .build();
 
-        Project saved = projectRepository.save(project);
-        log.info("Project created with id: {}", saved.getId());
-        return saved;
+        projectMapper.insert(project);
+        log.info("Project created with id: {}", project.getId());
+        return project;
     }
 
     @Override
-    public Page<Project> getProjects(Pageable pageable) {
-        return projectRepository.findAll(pageable);
+    public IPage<Project> getProjects(IPage<Project> page) {
+        return projectMapper.selectPage(page, null);
     }
 
     @Override
     public Project getProjectById(Long id) {
-        return projectRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + id));
+        Project project = projectMapper.selectById(id);
+        if (project == null) {
+            throw new ResourceNotFoundException("Project not found with id: " + id);
+        }
+        return project;
     }
 
     @Override
@@ -87,7 +89,8 @@ public class ProjectServiceImpl implements ProjectService {
             project.setConfigJson(request.getConfigJson());
         }
 
-        return projectRepository.save(project);
+        projectMapper.updateById(project);
+        return project;
     }
 
     @Override
@@ -101,7 +104,7 @@ public class ProjectServiceImpl implements ProjectService {
             throw new IllegalStateException("Cannot delete project in processing status");
         }
 
-        projectRepository.deleteById(id);
+        projectMapper.deleteById(id);
     }
 
     @Override
@@ -121,7 +124,7 @@ public class ProjectServiceImpl implements ProjectService {
         project.setCurrentStep("正在初始化...");
         project.setProgress(0);
 
-        Project savedProject = projectRepository.save(project);
+        projectMapper.updateById(project);
 
         // 发送 WebSocket 开始消息
         progressWebSocketService.sendTaskStarted(id, "VIDEO_GENERATION");
@@ -129,7 +132,7 @@ public class ProjectServiceImpl implements ProjectService {
         // 异步执行视频生成任务
         processVideoGenerationAsync(id, request);
 
-        return savedProject;
+        return project;
     }
 
     @Override
@@ -145,7 +148,7 @@ public class ProjectServiceImpl implements ProjectService {
 
         project.setStatus(Project.ProjectStatus.CANCELLED);
         project.setCurrentStep("任务已取消");
-        projectRepository.save(project);
+        projectMapper.updateById(project);
 
         // 发送 WebSocket 取消消息
         progressWebSocketService.sendTaskFailed(id, "VIDEO_GENERATION", "Task cancelled by user");
@@ -203,10 +206,11 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional
     public void updateProgress(Long projectId, int progress, String currentStep) {
-        projectRepository.findById(projectId).ifPresent(project -> {
+        Project project = projectMapper.selectById(projectId);
+        if (project != null) {
             project.setProgress(progress);
             project.setCurrentStep(currentStep);
-            projectRepository.save(project);
-        });
+            projectMapper.updateById(project);
+        }
     }
 }

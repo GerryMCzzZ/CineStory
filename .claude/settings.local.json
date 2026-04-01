@@ -3,7 +3,9 @@
     "allow": [
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(mvn compile:*)"
+      "Bash(mvn compile:*)",
+      "Bash(find /d/Project/CineStory/cinestory-backend -type f -name *.java)",
+      "Bash(find D:ProjectCineStory -type f -name *.sql -o -name liquibase*.properties -o -name flyway.properties)"
     ]
   }
 }

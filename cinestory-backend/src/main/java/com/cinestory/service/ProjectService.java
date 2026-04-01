@@ -1,11 +1,10 @@
 package com.cinestory.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.cinestory.model.dto.request.CreateProjectRequest;
 import com.cinestory.model.dto.request.StartTaskRequest;
 import com.cinestory.model.dto.request.UpdateProjectRequest;
 import com.cinestory.model.entity.Project;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 /**
  * 项目服务接口
@@ -20,7 +19,7 @@ public interface ProjectService {
     /**
      * 获取项目列表（分页）
      */
-    Page<Project> getProjects(Pageable pageable);
+    IPage<Project> getProjects(IPage<Project> page);
 
     /**
      * 根据 ID 获取项目

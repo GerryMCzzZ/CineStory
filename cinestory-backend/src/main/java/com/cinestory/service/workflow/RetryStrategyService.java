@@ -1,7 +1,7 @@
 package com.cinestory.service.workflow;
 
+import com.cinestory.mapper.VideoGenerationMapper;
 import com.cinestory.model.entity.VideoGeneration;
-import com.cinestory.repository.VideoGenerationRepository;
 import com.cinestory.service.video.VideoGenerationProvider;
 import com.cinestory.service.video.VideoGenerationService;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class RetryStrategyService {
 
-    private final VideoGenerationRepository videoGenerationRepository;
+    private final VideoGenerationMapper videoGenerationMapper;
     private final VideoGenerationService videoGenerationService;
     private final List<VideoGenerationProvider> providers;
 
@@ -84,7 +84,7 @@ public class RetryStrategyService {
      */
     @Transactional
     public void handleFailure(Long generationId, String errorMessage, String failedProvider) {
-        VideoGeneration generation = videoGenerationRepository.findById(generationId).orElse(null);
+        VideoGeneration generation = videoGenerationMapper.selectById(generationId);
         if (generation == null) {
             log.warn("Generation not found for retry: {}", generationId);
             return;
@@ -108,7 +108,7 @@ public class RetryStrategyService {
         // 更新生成记录
         generation.setRetryCount(attemptCount);
         generation.setErrorMessage(errorMessage);
-        videoGenerationRepository.save(generation);
+        videoGenerationMapper.updateById(generation);
 
         // 记录重试状态
         RetryState state = RetryState.builder()
@@ -164,7 +164,7 @@ public class RetryStrategyService {
         state.setStatus(RetryStatus.RUNNING);
         retryStates.put(generationId, state);
 
-        VideoGeneration generation = videoGenerationRepository.findById(generationId).orElse(null);
+        VideoGeneration generation = videoGenerationMapper.selectById(generationId);
         if (generation == null) {
             log.warn("Generation not found for retry: {}", generationId);
             abandonRetry(generationId);
@@ -176,7 +176,7 @@ public class RetryStrategyService {
         generation.setProvider(null);
         generation.setProviderTaskId(null);
         generation.setErrorMessage(null);
-        videoGenerationRepository.save(generation);
+        videoGenerationMapper.updateById(generation);
 
         log.info("Executing retry #{} for generation {}", state.getAttemptCount(), generationId);
 
@@ -209,10 +209,10 @@ public class RetryStrategyService {
             retryStates.put(generationId, state);
         }
 
-        VideoGeneration generation = videoGenerationRepository.findById(generationId).orElse(null);
+        VideoGeneration generation = videoGenerationMapper.selectById(generationId);
         if (generation != null) {
             generation.setErrorMessage("Failed after " + state.getAttemptCount() + " attempts: " + state.getLastError());
-            videoGenerationRepository.save(generation);
+            videoGenerationMapper.updateById(generation);
         }
 
         // 立即清理

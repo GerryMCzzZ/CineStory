@@ -1,5 +1,7 @@
 package com.cinestory.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cinestory.model.dto.response.ApiResponse;
 import com.cinestory.model.dto.response.GenerationStatsResponse;
 import com.cinestory.model.dto.response.PageResponse;
@@ -11,15 +13,13 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
  * 视频生成历史控制器
+ *
+ * @author CineStory
  */
 @Slf4j
 @RestController
@@ -39,22 +39,17 @@ public class VideoGenerationController {
             @Parameter(description = "页码（从0开始）") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "每页大小") @RequestParam(defaultValue = "20") int size,
             @Parameter(description = "状态") @RequestParam(required = false) VideoGeneration.GenerationStatus status,
-            @Parameter(description = "提供商") @RequestParam(required = false) String provider,
-            @Parameter(description = "排序字段") @RequestParam(defaultValue = "createdAt") String sortBy,
-            @Parameter(description = "排序方向") @RequestParam(defaultValue = "DESC") Sort.Direction sortDirection
+            @Parameter(description = "提供商") @RequestParam(required = false) String provider
     ) {
-        Sort sort = Sort.by(sortDirection, sortBy);
-        Pageable pageable = PageRequest.of(page, size, sort);
-
-        Page<VideoGenerationResponse> result = videoGenerationService.getHistory(
-                pageable, status, provider
-        );
+        // MyBatis-Plus 页码从 1 开始，前端从 0 开始
+        Page<VideoGeneration> mpPage = new Page<>(page + 1, size);
+        IPage<VideoGenerationResponse> result = videoGenerationService.getHistory(mpPage, status, provider);
 
         PageResponse<VideoGenerationResponse> pageResponse = PageResponse.of(
-                result.getContent(),
-                result.getTotalElements(),
-                result.getNumber(),
-                result.getSize()
+                result.getRecords(),
+                result.getTotal(),
+                (int) result.getCurrent() - 1,
+                (int) result.getSize()
         );
 
         return ResponseEntity.ok(ApiResponse.success(pageResponse));

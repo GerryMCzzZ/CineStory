@@ -2,6 +2,7 @@ package com.cinestory.exception;
 
 import com.cinestory.model.dto.response.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -85,6 +86,17 @@ public class GlobalExceptionHandler {
                         .data(errors)
                         .timestamp(System.currentTimeMillis())
                         .build());
+    }
+
+    /**
+     * 处理数据完整性违反异常
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        log.warn("Data integrity violation: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(400, "数据完整性约束违反"));
     }
 
     /**

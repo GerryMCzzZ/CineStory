@@ -1,6 +1,6 @@
 package com.cinestory.model.entity;
 
-import jakarta.persistence.*;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,76 +10,73 @@ import java.time.LocalDateTime;
 
 /**
  * 视频生成提示词实体
+ *
+ * @author CineStory
  */
-@Entity
-@Table(name = "video_prompts")
+@TableName("video_prompts")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class VideoPrompt {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(type = IdType.AUTO)
     private Long id;
 
-    @Column(name = "slice_id", nullable = false, unique = true)
     private Long sliceId;
 
-    // 提示词内容
-    @Column(name = "visual_prompt", nullable = false, columnDefinition = "TEXT")
+    /**
+     * 视觉提示词
+     */
     private String visualPrompt;
 
-    @Column(name = "motion_prompt", columnDefinition = "TEXT")
+    /**
+     * 运动提示词
+     */
     private String motionPrompt;
 
-    @Column(name = "camera_prompt", columnDefinition = "TEXT")
+    /**
+     * 镜头提示词
+     */
     private String cameraPrompt;
 
-    @Column(name = "atmosphere")
+    /**
+     * 氛围描述
+     */
     private String atmosphere;
 
-    // 生成参数
-    @Column(name = "duration")
     @Builder.Default
     private Integer duration = 5;
 
-    @Column(name = "aspect_ratio", length = 20)
     @Builder.Default
     private String aspectRatio = "16:9";
 
-    // 修改记录
-    @Column(name = "is_manual")
     @Builder.Default
     private Boolean isManual = false;
 
-    @Column(name = "original_prompt", columnDefinition = "TEXT")
+    /**
+     * 原始提示词（LLM 生成前的原文）
+     */
     private String originalPrompt;
 
-    // LLM 调用记录
-    @Column(name = "llm_provider", length = 50)
+    /**
+     * LLM 服务商
+     */
     private String llmProvider;
 
-    @Column(name = "llm_model", length = 100)
+    /**
+     * LLM 模型名称
+     */
     private String llmModel;
 
-    @Column(name = "llm_tokens_used")
+    /**
+     * LLM 消耗 Token 数
+     */
     private Integer llmTokensUsed;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
 }

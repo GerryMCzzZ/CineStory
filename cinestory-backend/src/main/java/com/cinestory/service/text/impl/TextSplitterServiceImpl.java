@@ -1,9 +1,9 @@
 package com.cinestory.service.text.impl;
 
+import com.cinestory.mapper.TextSliceMapper;
 import com.cinestory.model.dto.NovelInput;
 import com.cinestory.model.dto.SplitConfig;
 import com.cinestory.model.entity.TextSlice;
-import com.cinestory.repository.TextSliceRepository;
 import com.cinestory.service.text.TextSplitterService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TextSplitterServiceImpl implements TextSplitterService {
 
-    private final TextSliceRepository textSliceRepository;
+    private final TextSliceMapper textSliceMapper;
 
     // 句子结束标记
     private static final Pattern SENTENCE_END = Pattern.compile("[。！？\\.!?]+");
@@ -119,9 +119,10 @@ public class TextSplitterServiceImpl implements TextSplitterService {
         // 保存到数据库
         for (TextSlice slice : slices) {
             slice.setProjectId(projectId);
+            textSliceMapper.insert(slice);
         }
 
-        return textSliceRepository.saveAll(slices);
+        return slices;
     }
 
     @Override
